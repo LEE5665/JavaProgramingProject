@@ -1,4 +1,4 @@
-package gui.panel;
+package gui.loginlogout.panel;
 
 import java.awt.*;
 import java.awt.event.MouseAdapter;
@@ -6,13 +6,15 @@ import java.awt.event.MouseEvent;
 import javax.swing.*;
 
 import com.formdev.flatlaf.FlatClientProperties;
-import net.miginfocom.swing.MigLayout;
 
-import gui.TestFrame;
+import api.DB;
+import gui.loginlogout.LoginLogoutFrame;
+import gui.main.TodosFrame;
+import net.miginfocom.swing.MigLayout;
 
 public class LoginPanel extends JPanel {
 
-    public LoginPanel(TestFrame parentFrame) {
+    public LoginPanel(LoginLogoutFrame parentFrame) {
     	super(new MigLayout("align center center"));
     	
     	JPanel panel = new JPanel(new MigLayout("wrap 1", "[350!]"));
@@ -50,6 +52,20 @@ public class LoginPanel extends JPanel {
         JCheckBox rememberMe = new JCheckBox("로그인 상태 유지");
 
         JButton btnLogin = new JButton("로그인");
+        btnLogin.addActionListener(e -> {
+            String username = txtUser.getText();
+            String password = new String(txtPass.getPassword());
+
+            int userId = DB.login(username, password);
+            System.out.println(userId);
+            if (userId > 0) {
+                TodosFrame todosFrame = new TodosFrame(userId);
+                todosFrame.setVisible(true);
+                SwingUtilities.getWindowAncestor(btnLogin).dispose();
+            } else {
+                JOptionPane.showMessageDialog(this, "로그인 실패! 아이디 또는 비밀번호를 확인하세요.");
+            }
+        });
 
         JLabel signupText = new JLabel("<html><div style='text-align: center;'>아이디를 등록해야 합니다 <a href='#'>사용자 등록</a></div></html>");
         signupText.setForeground(Color.LIGHT_GRAY);

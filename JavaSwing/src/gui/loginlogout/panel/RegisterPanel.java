@@ -1,9 +1,9 @@
-package gui.panel;
+package gui.loginlogout.panel;
 
 import javax.swing.*;
 
 import api.DB;
-import gui.TestFrame;
+import gui.loginlogout.LoginLogoutFrame;
 
 import java.awt.*;
 import java.awt.event.ActionEvent;
@@ -16,7 +16,7 @@ public class RegisterPanel extends JPanel {
 
 	private static final long serialVersionUID = 1L;
 
-	public RegisterPanel(TestFrame parentFrame) {
+	public RegisterPanel(LoginLogoutFrame parentFrame) {
 		super(new MigLayout("align center center")); // ✅ wrapper 역할
 		setBackground(new Color(20, 20, 20));
 

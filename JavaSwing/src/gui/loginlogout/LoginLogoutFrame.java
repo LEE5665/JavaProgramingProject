@@ -1,4 +1,4 @@
-package gui;
+package gui.loginlogout;
 
 import java.awt.Color;
 import java.awt.EventQueue;
@@ -12,11 +12,11 @@ import javax.swing.*;
 import com.formdev.flatlaf.FlatClientProperties;
 import com.formdev.flatlaf.intellijthemes.FlatArcDarkIJTheme;
 
-import gui.panel.LoginPanel;
-import gui.panel.RegisterPanel;
+import gui.loginlogout.panel.LoginPanel;
+import gui.loginlogout.panel.RegisterPanel;
 import net.miginfocom.swing.MigLayout;
 
-public class TestFrame extends JFrame {
+public class LoginLogoutFrame extends JFrame {
 
 	private static final long serialVersionUID = 1L;
 	private JPanel contentPane;
@@ -26,7 +26,7 @@ public class TestFrame extends JFrame {
 			public void run() {
 				try {
 					UIManager.setLookAndFeel(new FlatArcDarkIJTheme());
-					TestFrame frame = new TestFrame();
+					LoginLogoutFrame frame = new LoginLogoutFrame();
 					frame.setVisible(true);
 				} catch (Exception e) {
 					e.printStackTrace();
@@ -38,7 +38,7 @@ public class TestFrame extends JFrame {
 	/**
 	 * Create the frame.
 	 */
-	public TestFrame() {
+	public LoginLogoutFrame() {
 		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setSize(1000, 600);
         setLocationRelativeTo(null);
