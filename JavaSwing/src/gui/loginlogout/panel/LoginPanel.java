@@ -9,7 +9,7 @@ import com.formdev.flatlaf.FlatClientProperties;
 
 import api.DB;
 import gui.loginlogout.LoginLogoutFrame;
-import gui.main.TodosFrame;
+import gui.main.MainFrame;
 import net.miginfocom.swing.MigLayout;
 
 public class LoginPanel extends JPanel {
@@ -59,7 +59,7 @@ public class LoginPanel extends JPanel {
             int userId = DB.login(username, password);
             System.out.println(userId);
             if (userId > 0) {
-                TodosFrame todosFrame = new TodosFrame(userId);
+                MainFrame todosFrame = new MainFrame(userId);
                 todosFrame.setVisible(true);
                 SwingUtilities.getWindowAncestor(btnLogin).dispose();
             } else {

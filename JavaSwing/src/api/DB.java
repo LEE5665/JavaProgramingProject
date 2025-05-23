@@ -3,7 +3,7 @@ package api;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
-import api.model.Todos;
+import api.model.Memo;
 
 public class DB {
 	
@@ -36,9 +36,9 @@ public class DB {
         }
     }
     
-    public static List<Todos> loadTodos(int userId) {
-        List<Todos> list = new ArrayList<>();
-        String sql = "SELECT * FROM todos WHERE user_id = ? ORDER BY `index` ASC";
+    public static List<Memo> loadMemo(int userId) {
+        List<Memo> list = new ArrayList<>();
+        String sql = "SELECT * FROM memo WHERE user_id = ? ORDER BY `index` ASC";
 
         try (Connection conn = getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
@@ -47,7 +47,7 @@ public class DB {
             ResultSet rs = pstmt.executeQuery();
 
             while (rs.next()) {
-                list.add(new Todos(
+                list.add(new Memo(
                     rs.getInt("id"),
                     rs.getInt("user_id"),
                     rs.getString("content"),
@@ -63,14 +63,24 @@ public class DB {
     }
 
     // 메모 추가
-    public static int insertTodo(int userId, String content, int orderIndex) {
-        String sql = "INSERT INTO todos (user_id, content, `index`) VALUES (?, ?, ?)";
+    public static int insertMemo(int userId, String content, int orderIndex) {
+        String sql = "INSERT INTO memo (user_id, content, `index`) VALUES (?, ?, ?)";
         return executeUpdate(sql, new Object[]{userId, content, orderIndex});
+    }
+    
+    public static int updateMemoContent(int memoId, String content) {
+        String sql = "UPDATE memo SET content = ? WHERE id = ?";
+        return executeUpdate(sql, new Object[]{content, memoId});
+    }
+
+    public static int deleteMemo(int memoId) {
+        String sql = "DELETE FROM memo WHERE id = ?";
+        return executeUpdate(sql, new Object[]{memoId});
     }
 
     // 메모 순서 변경
     public static int updateOrder(int todoId, int newIndex) {
-        String sql = "UPDATE todos SET `index` = ? WHERE id = ?";
+        String sql = "UPDATE memo SET `index` = ? WHERE id = ?";
         return executeUpdate(sql, new Object[]{newIndex, todoId});
     }
     
