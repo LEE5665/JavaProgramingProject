@@ -15,21 +15,21 @@ public class MainFrame extends JFrame {
     private JToggleButton memoButton;
     private ButtonGroup typeGroup;
 
-    private JPanel contentPanel;          // °¡¿îµ¥ °¥¾Æ³¢¿ì´Â ÆĞ³Î
-    private MemoPanel memoPanel;          // ¸Ş¸ğ Àü¿ë ÆĞ³Î
-    private TodoPanel todoPanel;          // ÅõµÎ Àü¿ë ÆĞ³Î
+    private JPanel contentPanel;          // ê°€ìš´ë° ê°ˆì•„ë¼ìš°ëŠ” íŒ¨ë„
+    private MemoPanel memoPanel;          // ë©”ëª¨ ì „ìš© íŒ¨ë„
+    private TodoPanel todoPanel;          // íˆ¬ë‘ ì „ìš© íŒ¨ë„
 
     public MainFrame(int userId) {
         this.userId = userId;
-        setTitle("ÀÏÁ¤ °ü¸®");
+        setTitle("ì¼ì • ê´€ë¦¬");
         setSize(1200, 800);
         setDefaultCloseOperation(EXIT_ON_CLOSE);
         setLocationRelativeTo(null);
         setBackground(new Color(20, 20, 20));
 
-        // À¯Çü ¼±ÅÃ ¹öÆ°
+        // ìœ í˜• ì„ íƒ ë²„íŠ¼
         todoButton = createTypeToggle("To-do list");
-        memoButton = createTypeToggle("¸Ş¸ğÀå");
+        memoButton = createTypeToggle("ë©”ëª¨ì¥");
         typeGroup = new ButtonGroup();
         typeGroup.add(todoButton);
         typeGroup.add(memoButton);
@@ -51,7 +51,7 @@ public class MainFrame extends JFrame {
         modePanel.add(typePanel, BorderLayout.CENTER);
         modePanel.add(separator, BorderLayout.SOUTH);
 
-        // Áß¾Ó ÄÁÅÙÃ÷ ÆĞ³Î (Ä«µå ·¹ÀÌ¾Æ¿ô)
+        // ì¤‘ì•™ ì»¨í…ì¸  íŒ¨ë„ (ì¹´ë“œ ë ˆì´ì•„ì›ƒ)
         contentPanel = new JPanel(new CardLayout());
         memoPanel = new MemoPanel(userId);
         todoPanel = new TodoPanel();

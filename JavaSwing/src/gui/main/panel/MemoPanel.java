@@ -22,7 +22,7 @@ public class MemoPanel extends JPanel {
         setLayout(new BorderLayout());
         setBackground(new Color(30, 30, 30));
 
-        JButton addButton = new JButton("+ ¸Ş¸ğ Ãß°¡");
+        JButton addButton = new JButton("+ ë©”ëª¨ ì¶”ê°€");
         addButton.addActionListener(e -> {
             new MemoEditorFrame("", content -> {
                 int orderIndex = listPanel.getComponentCount() + 1;
@@ -154,9 +154,9 @@ public class MemoPanel extends JPanel {
     private void showActionPanel() {
         actionPanel.removeAll();
 
-        JLabel selectedLabel = new JLabel("¼±ÅÃÇÑ ¸Ş¸ğ:");
-        JButton editButton = new JButton("¼öÁ¤");
-        JButton deleteButton = new JButton("»èÁ¦");
+        JLabel selectedLabel = new JLabel("ì„ íƒí•œ ë©”ëª¨:");
+        JButton editButton = new JButton("ìˆ˜ì •");
+        JButton deleteButton = new JButton("ì‚­ì œ");
 
         editButton.addActionListener(e -> {
             new MemoEditorFrame(selectedMemo.content, newContent -> {
@@ -166,7 +166,7 @@ public class MemoPanel extends JPanel {
         });
 
         deleteButton.addActionListener(e -> {
-            int confirm = JOptionPane.showConfirmDialog(this, "Á¤¸» »èÁ¦ÇÏ½Ã°Ú½À´Ï±î?", "È®ÀÎ", JOptionPane.YES_NO_OPTION);
+            int confirm = JOptionPane.showConfirmDialog(this, "ì •ë§ ì‚­ì œí•˜ì‹œê² ìŠµë‹ˆê¹Œ?", "í™•ì¸", JOptionPane.YES_NO_OPTION);
             if (confirm == JOptionPane.YES_OPTION) {
                 DB.deleteMemo(selectedMemo.id);
                 selectedMemo = null;

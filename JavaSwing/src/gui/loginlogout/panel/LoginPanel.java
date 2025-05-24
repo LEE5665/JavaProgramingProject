@@ -25,7 +25,7 @@ public class LoginPanel extends JPanel {
         panel.setBackground(new Color(30, 30, 30));
         panel.setBorder(BorderFactory.createEmptyBorder(30, 30, 30, 30));
 
-        JLabel title = new JLabel("ÀÏÁ¤ °ü¸®");
+        JLabel title = new JLabel("ì¼ì • ê´€ë¦¬");
         title.putClientProperty(FlatClientProperties.STYLE,
                 "font:bold +10;" +
                 "[light]foreground:lighten(@foreground,30%);" +
@@ -34,24 +34,24 @@ public class LoginPanel extends JPanel {
         title.setForeground(Color.WHITE);
         panel.add(title, "gapbottom 5, center");
 
-        JLabel subtitle = new JLabel("»ç¿ëÀÚ µî·Ï ÈÄ »ç¿ë ÇØ ÁÖ¼¼¿ä");
+        JLabel subtitle = new JLabel("ì‚¬ìš©ì ë“±ë¡ í›„ ì‚¬ìš© í•´ ì£¼ì„¸ìš”");
         subtitle.setFont(new Font("Dialog", Font.PLAIN, 13));
         subtitle.setForeground(Color.LIGHT_GRAY);
         panel.add(subtitle, "gapbottom 15, center");
 
-        JLabel lblUser = new JLabel("¾ÆÀÌµğ");
+        JLabel lblUser = new JLabel("ì•„ì´ë””");
         lblUser.setForeground(Color.WHITE);
         JTextField txtUser = new JTextField();
-        txtUser.putClientProperty("JTextField.placeholderText", "¾ÆÀÌµğ ÀÔ·Â");
+        txtUser.putClientProperty("JTextField.placeholderText", "ì•„ì´ë”” ì…ë ¥");
 
-        JLabel lblPass = new JLabel("ºñ¹Ğ¹øÈ£");
+        JLabel lblPass = new JLabel("ë¹„ë°€ë²ˆí˜¸");
         lblPass.setForeground(Color.WHITE);
         JPasswordField txtPass = new JPasswordField();
-        txtPass.putClientProperty("JTextField.placeholderText", "ºñ¹Ğ¹øÈ£ ÀÔ·Â");
+        txtPass.putClientProperty("JTextField.placeholderText", "ë¹„ë°€ë²ˆí˜¸ ì…ë ¥");
 
-        JCheckBox rememberMe = new JCheckBox("·Î±×ÀÎ »óÅÂ À¯Áö");
+        JCheckBox rememberMe = new JCheckBox("ë¡œê·¸ì¸ ìƒíƒœ ìœ ì§€");
 
-        JButton btnLogin = new JButton("·Î±×ÀÎ");
+        JButton btnLogin = new JButton("ë¡œê·¸ì¸");
         btnLogin.addActionListener(e -> {
             String username = txtUser.getText();
             String password = new String(txtPass.getPassword());
@@ -63,11 +63,11 @@ public class LoginPanel extends JPanel {
                 todosFrame.setVisible(true);
                 SwingUtilities.getWindowAncestor(btnLogin).dispose();
             } else {
-                JOptionPane.showMessageDialog(this, "·Î±×ÀÎ ½ÇÆĞ! ¾ÆÀÌµğ ¶Ç´Â ºñ¹Ğ¹øÈ£¸¦ È®ÀÎÇÏ¼¼¿ä.");
+                JOptionPane.showMessageDialog(this, "ë¡œê·¸ì¸ ì‹¤íŒ¨! ì•„ì´ë”” ë˜ëŠ” ë¹„ë°€ë²ˆí˜¸ë¥¼ í™•ì¸í•˜ì„¸ìš”.");
             }
         });
 
-        JLabel signupText = new JLabel("<html><div style='text-align: center;'>¾ÆÀÌµğ¸¦ µî·ÏÇØ¾ß ÇÕ´Ï´Ù <a href='#'>»ç¿ëÀÚ µî·Ï</a></div></html>");
+        JLabel signupText = new JLabel("<html><div style='text-align: center;'>ì•„ì´ë””ë¥¼ ë“±ë¡í•´ì•¼ í•©ë‹ˆë‹¤ <a href='#'>ì‚¬ìš©ì ë“±ë¡</a></div></html>");
         signupText.setForeground(Color.LIGHT_GRAY);
         signupText.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
         signupText.addMouseListener(new MouseAdapter() {

@@ -8,7 +8,7 @@ import java.util.function.Consumer;
 
 public class MemoEditorFrame extends JFrame {
     public MemoEditorFrame(String initialText, Consumer<String> onSave) {
-        setTitle("∏ﬁ∏ ¿‘∑¬");
+        setTitle("Î©îÎ™® ÏûÖÎ†•");
         setSize(500, 400);
         setLocationRelativeTo(null);
         setDefaultCloseOperation(DISPOSE_ON_CLOSE);
@@ -17,7 +17,7 @@ public class MemoEditorFrame extends JFrame {
         panel.setBackground(new Color(30, 30, 30));
         panel.putClientProperty(FlatClientProperties.STYLE, "arc:20");
 
-        JLabel titleLabel = new JLabel("∏ﬁ∏ ≥ªøÎ ¿‘∑¬");
+        JLabel titleLabel = new JLabel("Î©îÎ™® ÎÇ¥Ïö© ÏûÖÎ†•");
         titleLabel.setFont(new Font("Dialog", Font.BOLD, 16));
         titleLabel.setForeground(Color.WHITE);
         panel.add(titleLabel);
@@ -30,14 +30,14 @@ public class MemoEditorFrame extends JFrame {
         scrollPane.setPreferredSize(new Dimension(400, 250));
         panel.add(scrollPane, "grow, h 250!");
 
-        JButton saveButton = new JButton("¿˙¿Â");
+        JButton saveButton = new JButton("Ï†ÄÏû•");
         saveButton.addActionListener(e -> {
             String content = textArea.getText().trim();
             if (!content.isEmpty()) {
                 onSave.accept(content);
                 dispose();
             } else {
-                JOptionPane.showMessageDialog(this, "≥ªøÎ¿ª ¿‘∑¬«ÿ¡÷ººø‰.", "∞Ê∞Ì", JOptionPane.WARNING_MESSAGE);
+                JOptionPane.showMessageDialog(this, "ÎÇ¥Ïö©ÏùÑ ÏûÖÎ†•Ìï¥Ï£ºÏÑ∏Ïöî.", "Í≤ΩÍ≥†", JOptionPane.WARNING_MESSAGE);
             }
         });
 

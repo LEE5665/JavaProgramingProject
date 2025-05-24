@@ -31,7 +31,7 @@ public class DB {
             return pstmt.executeUpdate();
 
         } catch (SQLException e) {
-            System.err.println("SQL ½ÇÇà ½ÇÆÐ: " + e.getMessage());
+            System.err.println("SQL ì‹¤í–‰ ì‹¤íŒ¨: " + e.getMessage());
             return -1;
         }
     }
@@ -62,7 +62,7 @@ public class DB {
         return list;
     }
 
-    // ¸Þ¸ð Ãß°¡
+    // ë©”ëª¨ ì¶”ê°€
     public static int insertMemo(int userId, String content, int orderIndex) {
         String sql = "INSERT INTO memo (user_id, content, `index`) VALUES (?, ?, ?)";
         return executeUpdate(sql, new Object[]{userId, content, orderIndex});
@@ -78,7 +78,7 @@ public class DB {
         return executeUpdate(sql, new Object[]{memoId});
     }
 
-    // ¸Þ¸ð ¼ø¼­ º¯°æ
+    // ë©”ëª¨ ìˆœì„œ ë³€ê²½
     public static int updateOrder(int todoId, int newIndex) {
         String sql = "UPDATE memo SET `index` = ? WHERE id = ?";
         return executeUpdate(sql, new Object[]{newIndex, todoId});
