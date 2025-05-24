@@ -43,7 +43,7 @@ public class LoginLogoutFrame extends JFrame {
         setSize(1000, 600);
         setLocationRelativeTo(null);
         getContentPane().setBackground(new Color(20, 20, 20));
-		setTitle("¿œ¡§ ∞¸∏Æ");
+		setTitle("ÏùºÏ†ï Í¥ÄÎ¶¨");
 		contentPane = new LoginPanel(this);
 		setContentPane(contentPane);
 	}

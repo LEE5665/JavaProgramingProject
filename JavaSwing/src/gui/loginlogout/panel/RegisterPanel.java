@@ -17,7 +17,7 @@ public class RegisterPanel extends JPanel {
 	private static final long serialVersionUID = 1L;
 
 	public RegisterPanel(LoginLogoutFrame parentFrame) {
-		super(new MigLayout("align center center")); // ✅ wrapper 역할
+		super(new MigLayout("align center center"));
 		setBackground(new Color(20, 20, 20));
 
 		JPanel panel = new JPanel(new MigLayout("wrap 1", "[350!]"));
