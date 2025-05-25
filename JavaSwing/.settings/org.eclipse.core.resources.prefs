@@ -1,0 +1,10 @@
+eclipse.preferences.version=1
+encoding//src/api/DB.java=UTF-8
+encoding//src/api/model/Memo.java=UTF-8
+encoding//src/gui/loginlogout/LoginLogoutFrame.java=UTF-8
+encoding//src/gui/loginlogout/panel/LoginPanel.java=UTF-8
+encoding//src/gui/loginlogout/panel/RegisterPanel.java=UTF-8
+encoding//src/gui/main/MainFrame.java=UTF-8
+encoding//src/gui/main/MemoEditorFrame.java=UTF-8
+encoding//src/gui/main/panel/MainPanel.java=UTF-8
+encoding//src/gui/main/panel/MemoPanel.java=UTF-8
