@@ -36,6 +36,7 @@ public class MainFrame extends JFrame {
 	private MemoPanel memoPanel;
 	private TodoPanel todoPanel;
 
+<<<<<<< HEAD
 	public MainFrame(int userId) {
 		this.userId = userId;
 		applySavedLookAndFeel();
@@ -51,6 +52,27 @@ public class MainFrame extends JFrame {
 		typeGroup.add(todoButton);
 		typeGroup.add(memoButton);
 		memoButton.setSelected(true);
+=======
+    private JPanel contentPanel;          // 가운데 갈아끼우는 패널
+    private MemoPanel memoPanel;          // 메모 전용 패널
+    private TodoPanel todoPanel;          // 투두 전용 패널
+
+    public MainFrame(int userId) {
+        this.userId = userId;
+        setTitle("일정 관리");
+        setSize(1200, 800);
+        setDefaultCloseOperation(EXIT_ON_CLOSE);
+        setLocationRelativeTo(null);
+        setBackground(new Color(20, 20, 20));
+
+        // 유형 선택 버튼
+        todoButton = createTypeToggle("To-do list");
+        memoButton = createTypeToggle("메모장");
+        typeGroup = new ButtonGroup();
+        typeGroup.add(todoButton);
+        typeGroup.add(memoButton);
+        memoButton.setSelected(true);
+>>>>>>> fa4b591b9e0f29c240e2e2884b011e27c126e6f9
 
 		todoButton.addActionListener(e -> switchContent("todo"));
 		memoButton.addActionListener(e -> switchContent("memo"));
@@ -101,8 +123,17 @@ public class MainFrame extends JFrame {
 		typePanel.add(memoButton, "growx");
 		typePanel.add(themeToggle, "align right");
 
+<<<<<<< HEAD
 		JSeparator separator = new JSeparator();
 		separator.setForeground(UIManager.getColor("Separator.foreground"));
+=======
+        // 중앙 컨텐츠 패널 (카드 레이아웃)
+        contentPanel = new JPanel(new CardLayout());
+        memoPanel = new MemoPanel(userId);
+        todoPanel = new TodoPanel();
+        contentPanel.add(memoPanel, "memo");
+        contentPanel.add(todoPanel, "todo");
+>>>>>>> fa4b591b9e0f29c240e2e2884b011e27c126e6f9
 
 		JPanel header = new JPanel(new BorderLayout());
 		header.add(typePanel, BorderLayout.CENTER);

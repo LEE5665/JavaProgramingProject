@@ -45,8 +45,19 @@ public class MemoPanel extends JPanel {
 		setLayout(new BorderLayout());
 		setBackground(UIManager.getColor("Panel.background"));
 
+<<<<<<< HEAD
 		JButton addButton = new JButton("+ 메모 추가");
 		addButton.addActionListener(e -> openEditorAndAdd());
+=======
+        JButton addButton = new JButton("+ 메모 추가");
+        addButton.addActionListener(e -> {
+            new MemoEditorFrame("", content -> {
+                int orderIndex = listPanel.getComponentCount() + 1;
+                DB.insertMemo(userId, content, orderIndex);
+                loadMemos();
+            }).setVisible(true);
+        });
+>>>>>>> fa4b591b9e0f29c240e2e2884b011e27c126e6f9
 
 		JPanel addPanel = new JPanel(new MigLayout("insets 10 20 10 20", "[grow][100!]"));
 		addPanel.setBackground(getBackground());
@@ -206,7 +217,13 @@ public class MemoPanel extends JPanel {
 
 			overlay.add(delBtn);
 
+<<<<<<< HEAD
 			overlay.setSize(WIDTH, overlay.getPreferredSize().height);
+=======
+        JLabel selectedLabel = new JLabel("선택한 메모:");
+        JButton editButton = new JButton("수정");
+        JButton deleteButton = new JButton("삭제");
+>>>>>>> fa4b591b9e0f29c240e2e2884b011e27c126e6f9
 
 			hover = new MouseAdapter() {
 				@Override
@@ -218,6 +235,7 @@ public class MemoPanel extends JPanel {
 					activeItem = AnimatedMemoItem.this;
 				}
 
+<<<<<<< HEAD
 				@Override
 				public void mouseExited(MouseEvent e) {
 					Timer exitDelay = new Timer(100, ev -> {
@@ -425,5 +443,16 @@ public class MemoPanel extends JPanel {
 			}
 		}
 	}
+=======
+        deleteButton.addActionListener(e -> {
+            int confirm = JOptionPane.showConfirmDialog(this, "정말 삭제하시겠습니까?", "확인", JOptionPane.YES_NO_OPTION);
+            if (confirm == JOptionPane.YES_OPTION) {
+                DB.deleteMemo(selectedMemo.id);
+                selectedMemo = null;
+                actionPanel.setVisible(false);
+                loadMemos();
+            }
+        });
+>>>>>>> fa4b591b9e0f29c240e2e2884b011e27c126e6f9
 
 }

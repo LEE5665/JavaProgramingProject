@@ -40,9 +40,15 @@ public class LoginLogoutFrame extends JFrame {
 	 */
 	public LoginLogoutFrame() {
 		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+<<<<<<< HEAD
 		setSize(1000, 600);
 		setLocationRelativeTo(null);
 		getContentPane().setBackground(new Color(20, 20, 20));
+=======
+        setSize(1000, 600);
+        setLocationRelativeTo(null);
+        getContentPane().setBackground(new Color(20, 20, 20));
+>>>>>>> fa4b591b9e0f29c240e2e2884b011e27c126e6f9
 		setTitle("일정 관리");
 		contentPane = new LoginPanel(this);
 		setContentPane(contentPane);

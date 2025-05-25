@@ -45,6 +45,7 @@ public class DB {
 					+ " username TEXT UNIQUE NOT NULL," + " password TEXT NOT NULL" + ")");
 			stmt.execute("CREATE INDEX IF NOT EXISTS idx_users_username ON users(username)");
 
+<<<<<<< HEAD
 			/* ---------------- memo ---------------- */
 			stmt.execute("CREATE TABLE IF NOT EXISTS memo (" + " id INTEGER PRIMARY KEY AUTOINCREMENT,"
 					+ " user_id INTEGER," + " content TEXT," + " fix_flag BOOLEAN DEFAULT 0,"
@@ -59,6 +60,17 @@ public class DB {
 					+ " updated_at TEXT DEFAULT (datetime('now','localtime')),"
 					+ " FOREIGN KEY(user_id)  REFERENCES users(id)," + " FOREIGN KEY(parent_id) REFERENCES todos(id)"
 					+ ")");
+=======
+        } catch (SQLException e) {
+            System.err.println("SQL 실행 실패: " + e.getMessage());
+            return -1;
+        }
+    }
+    
+    public static List<Memo> loadMemo(int userId) {
+        List<Memo> list = new ArrayList<>();
+        String sql = "SELECT * FROM memo WHERE user_id = ? ORDER BY `index` ASC";
+>>>>>>> fa4b591b9e0f29c240e2e2884b011e27c126e6f9
 
 			stmt.execute("CREATE INDEX IF NOT EXISTS idx_todos_user_date ON todos(user_id, todo_date)");
 			stmt.execute("CREATE INDEX IF NOT EXISTS idx_todos_parent_seq ON todos(parent_id, seq)");
@@ -83,6 +95,7 @@ public class DB {
 		}
 	}
 
+<<<<<<< HEAD
 	public static int login(String username, String plainPassword) {
 		String sql = "SELECT id, password FROM users WHERE username = ?";
 		try (Connection conn = getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
@@ -100,6 +113,18 @@ public class DB {
 		}
 		return -1;
 	}
+=======
+    // 메모 추가
+    public static int insertMemo(int userId, String content, int orderIndex) {
+        String sql = "INSERT INTO memo (user_id, content, `index`) VALUES (?, ?, ?)";
+        return executeUpdate(sql, new Object[]{userId, content, orderIndex});
+    }
+    
+    public static int updateMemoContent(int memoId, String content) {
+        String sql = "UPDATE memo SET content = ? WHERE id = ?";
+        return executeUpdate(sql, new Object[]{content, memoId});
+    }
+>>>>>>> fa4b591b9e0f29c240e2e2884b011e27c126e6f9
 
 	public static List<Memo> loadMemo(int userId) {
 		List<Memo> list = new ArrayList<>();
@@ -119,6 +144,7 @@ public class DB {
 			e.printStackTrace();
 		}
 
+<<<<<<< HEAD
 		list.sort((m1, m2) -> {
 			if (m1.isFixFlag() && !m2.isFixFlag())
 				return -1;
@@ -129,6 +155,18 @@ public class DB {
 			}
 			return m2.getUpdateAt().compareTo(m1.getUpdateAt());
 		});
+=======
+    // 메모 순서 변경
+    public static int updateOrder(int todoId, int newIndex) {
+        String sql = "UPDATE memo SET `index` = ? WHERE id = ?";
+        return executeUpdate(sql, new Object[]{newIndex, todoId});
+    }
+    
+    public static int login(String username, String password) {
+        String sql = "SELECT id FROM users WHERE username = ? AND password = ?";
+        try (Connection conn = getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+>>>>>>> fa4b591b9e0f29c240e2e2884b011e27c126e6f9
 
 		return list;
 	}

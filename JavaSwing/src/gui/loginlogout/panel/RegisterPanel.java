@@ -21,6 +21,11 @@ import net.miginfocom.swing.MigLayout;
 public class RegisterPanel extends JPanel {
 	public RegisterPanel(LoginLogoutFrame parentFrame) {
 		super(new MigLayout("align center center"));
+<<<<<<< HEAD
+=======
+		setBackground(new Color(20, 20, 20));
+
+>>>>>>> fa4b591b9e0f29c240e2e2884b011e27c126e6f9
 		JPanel panel = new JPanel(new MigLayout("wrap 1", "[350!]"));
 		panel.setBorder(BorderFactory.createEmptyBorder(30, 30, 30, 30));
 
