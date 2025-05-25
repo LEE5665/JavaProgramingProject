@@ -1,37 +1,37 @@
 package gui.loginlogout;
 
 import java.awt.Color;
-import java.awt.EventQueue;
-import java.awt.Font;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
+import java.util.prefs.Preferences;
 
-import javax.swing.*;
-import com.formdev.flatlaf.FlatClientProperties;
-import com.formdev.flatlaf.intellijthemes.FlatArcDarkIJTheme;
+import javax.swing.JFrame;
+import javax.swing.JPanel;
+import javax.swing.SwingUtilities;
+import javax.swing.UIManager;
 
 import gui.loginlogout.panel.LoginPanel;
-import gui.loginlogout.panel.RegisterPanel;
-import net.miginfocom.swing.MigLayout;
 
 public class LoginLogoutFrame extends JFrame {
 
 	private static final long serialVersionUID = 1L;
 	private JPanel contentPane;
+	public static final String LIGHT = "com.formdev.flatlaf.FlatIntelliJLaf";
+	public static final String DARK = "com.formdev.flatlaf.FlatDarkLaf";
 
 	public static void main(String[] args) {
-		EventQueue.invokeLater(new Runnable() {
-			public void run() {
-				try {
-					UIManager.setLookAndFeel(new FlatArcDarkIJTheme());
-					LoginLogoutFrame frame = new LoginLogoutFrame();
-					frame.setVisible(true);
-				} catch (Exception e) {
-					e.printStackTrace();
-				}
+		boolean dark = Preferences.userRoot().node("MyAppPrefs").getBoolean("darkMode", false);
+		try {
+			if (dark) {
+				UIManager.setLookAndFeel(DARK);
+			} else {
+				UIManager.setLookAndFeel(LIGHT);
 			}
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+
+		SwingUtilities.invokeLater(() -> {
+			LoginLogoutFrame frame = new LoginLogoutFrame();
+			frame.setVisible(true);
 		});
 	}
 
@@ -40,11 +40,12 @@ public class LoginLogoutFrame extends JFrame {
 	 */
 	public LoginLogoutFrame() {
 		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        setSize(1000, 600);
-        setLocationRelativeTo(null);
-        getContentPane().setBackground(new Color(20, 20, 20));
+		setSize(1000, 600);
+		setLocationRelativeTo(null);
+		getContentPane().setBackground(new Color(20, 20, 20));
 		setTitle("일정 관리");
 		contentPane = new LoginPanel(this);
 		setContentPane(contentPane);
 	}
+
 }

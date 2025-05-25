@@ -1,11 +1,22 @@
 package gui.loginlogout.panel;
 
-import java.awt.*;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
-import javax.swing.*;
+import java.awt.Cursor;
+import java.awt.Font;
+import java.awt.event.KeyAdapter;
+import java.awt.event.KeyEvent;
+import java.util.prefs.Preferences;
 
-import com.formdev.flatlaf.FlatClientProperties;
+import javax.swing.BorderFactory;
+import javax.swing.JButton;
+import javax.swing.JCheckBox;
+import javax.swing.JLabel;
+import javax.swing.JOptionPane;
+import javax.swing.JPanel;
+import javax.swing.JPasswordField;
+import javax.swing.JTextField;
+import javax.swing.SwingUtilities;
+import javax.swing.UIManager;
+import javax.swing.UnsupportedLookAndFeelException;
 
 import api.DB;
 import gui.loginlogout.LoginLogoutFrame;
@@ -13,80 +24,120 @@ import gui.main.MainFrame;
 import net.miginfocom.swing.MigLayout;
 
 public class LoginPanel extends JPanel {
+	private static final Preferences PREFS = Preferences.userRoot().node("MyAppPrefs");
 
-    public LoginPanel(LoginLogoutFrame parentFrame) {
-    	super(new MigLayout("align center center"));
-    	
-    	JPanel panel = new JPanel(new MigLayout("wrap 1", "[350!]"));
-        panel.putClientProperty(FlatClientProperties.STYLE,
-                "arc:20;" +
-                "[light]background:darken(@background,3%);" +
-                "[dark]background:lighten(@background,3%)");
-        panel.setBackground(new Color(30, 30, 30));
-        panel.setBorder(BorderFactory.createEmptyBorder(30, 30, 30, 30));
+	public LoginPanel(LoginLogoutFrame parentFrame) {
+		super(new MigLayout("align center center"));
 
-        JLabel title = new JLabel("일정 관리");
-        title.putClientProperty(FlatClientProperties.STYLE,
-                "font:bold +10;" +
-                "[light]foreground:lighten(@foreground,30%);" +
-                "[dark]foreground:darken(@foreground,30%)");
-        title.setFont(new Font("Dialog", Font.BOLD, 20));
-        title.setForeground(Color.WHITE);
-        panel.add(title, "gapbottom 5, center");
+		JPanel panel = new JPanel(new MigLayout("wrap 1", "[350!]"));
+		panel.setBorder(BorderFactory.createEmptyBorder(30, 30, 30, 30));
 
-        JLabel subtitle = new JLabel("사용자 등록 후 사용 해 주세요");
-        subtitle.setFont(new Font("Dialog", Font.PLAIN, 13));
-        subtitle.setForeground(Color.LIGHT_GRAY);
-        panel.add(subtitle, "gapbottom 15, center");
+		JLabel title = new JLabel("일정 관리");
+		title.setFont(new Font("Dialog", Font.BOLD, 20));
+		panel.add(title, "gapbottom 5, center");
 
-        JLabel lblUser = new JLabel("아이디");
-        lblUser.setForeground(Color.WHITE);
-        JTextField txtUser = new JTextField();
-        txtUser.putClientProperty("JTextField.placeholderText", "아이디 입력");
+		JLabel lblUser = new JLabel("아이디");
+		JTextField txtUser = new JTextField();
+		txtUser.putClientProperty("JTextField.placeholderText", "아이디 입력");
+		// 로그인 상태 유지된 값이 있으면 초기 아이디로 세팅
+		boolean remembered = PREFS.getBoolean("rememberMe", false);
+		if (remembered) {
+			txtUser.setText(PREFS.get("savedUser", ""));
+		}
 
-        JLabel lblPass = new JLabel("비밀번호");
-        lblPass.setForeground(Color.WHITE);
-        JPasswordField txtPass = new JPasswordField();
-        txtPass.putClientProperty("JTextField.placeholderText", "비밀번호 입력");
+		JLabel lblPass = new JLabel("비밀번호");
+		JPasswordField txtPass = new JPasswordField();
+		txtPass.putClientProperty("JTextField.placeholderText", "비밀번호 입력");
 
-        JCheckBox rememberMe = new JCheckBox("로그인 상태 유지");
+		JCheckBox rememberMe = new JCheckBox("아이디 저장");
+		// 초기 체크박스 상태
+		rememberMe.setSelected(remembered);
 
-        JButton btnLogin = new JButton("로그인");
-        btnLogin.addActionListener(e -> {
-            String username = txtUser.getText();
-            String password = new String(txtPass.getPassword());
+		JCheckBox lafToggle = new JCheckBox("다크 테마");
+		boolean dark = PREFS.getBoolean("darkMode", false);
+		lafToggle.setSelected(dark);
+		applyLookAndFeel(dark);
+		SwingUtilities.updateComponentTreeUI(parentFrame);
 
-            int userId = DB.login(username, password);
-            System.out.println(userId);
-            if (userId > 0) {
-                MainFrame todosFrame = new MainFrame(userId);
-                todosFrame.setVisible(true);
-                SwingUtilities.getWindowAncestor(btnLogin).dispose();
-            } else {
-                JOptionPane.showMessageDialog(this, "로그인 실패! 아이디 또는 비밀번호를 확인하세요.");
-            }
-        });
+		lafToggle.addActionListener(e -> {
+			boolean sel = lafToggle.isSelected();
+			PREFS.putBoolean("darkMode", sel);
+			applyLookAndFeel(sel);
+			SwingUtilities.updateComponentTreeUI(parentFrame);
+		});
 
-        JLabel signupText = new JLabel("<html><div style='text-align: center;'>아이디를 등록해야 합니다 <a href='#'>사용자 등록</a></div></html>");
-        signupText.setForeground(Color.LIGHT_GRAY);
-        signupText.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-        signupText.addMouseListener(new MouseAdapter() {
-            public void mouseClicked(MouseEvent e) {
-                parentFrame.setContentPane(new RegisterPanel(parentFrame));
-                parentFrame.revalidate();
-            }
-        });
+		JButton btnLogin = new JButton("로그인");
+		Runnable doLogin = () -> {
+			String username = txtUser.getText().trim();
+			String password = new String(txtPass.getPassword());
+			int userId = DB.login(username, password);
+			if (userId > 0) {
+				// 로그인 유지 설정 저장
+				PREFS.putBoolean("rememberMe", rememberMe.isSelected());
+				if (rememberMe.isSelected()) {
+					PREFS.put("savedUser", username);
+				} else {
+					PREFS.remove("savedUser");
+				}
+				MainFrame todosFrame = new MainFrame(userId);
+				todosFrame.setVisible(true);
+				SwingUtilities.getWindowAncestor(btnLogin).dispose();
+			} else {
+				JOptionPane.showMessageDialog(this, "로그인 실패! 아이디 또는 비밀번호를 확인하세요.");
+			}
+		};
+		btnLogin.addActionListener(e -> doLogin.run());
 
-        panel.add(lblUser, "gaptop 10");
-        panel.add(txtUser, "growx");
-        panel.add(lblPass, "gaptop 10");
-        panel.add(txtPass, "growx");
-        panel.add(rememberMe, "gaptop 5");
-        panel.add(btnLogin, "gaptop 15, growx");
-        panel.add(signupText, "gaptop 10, center");
+		txtUser.addKeyListener(new KeyAdapter() {
+			@Override
+			public void keyPressed(KeyEvent e) {
+				if (e.getKeyCode() == KeyEvent.VK_ENTER)
+					txtPass.requestFocusInWindow();
+			}
+		});
+		txtPass.addKeyListener(new KeyAdapter() {
+			@Override
+			public void keyPressed(KeyEvent e) {
+				if (e.getKeyCode() == KeyEvent.VK_ENTER)
+					doLogin.run();
+			}
+		});
 
-        setBackground(new Color(20, 20, 20));
-        
-        add(panel);
-    }
+		SwingUtilities.invokeLater(() -> parentFrame.getRootPane().setDefaultButton(btnLogin));
+
+		JLabel signupText = new JLabel(
+				"<html><div style='text-align: center;'>아이디를 등록해야 합니다 <a href='#'>사용자 등록</a></div></html>");
+		signupText.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+		signupText.addMouseListener(new java.awt.event.MouseAdapter() {
+			@Override
+			public void mouseClicked(java.awt.event.MouseEvent e) {
+				parentFrame.setContentPane(new RegisterPanel(parentFrame));
+				parentFrame.revalidate();
+			}
+		});
+
+		panel.add(lblUser);
+		panel.add(txtUser, "growx");
+		panel.add(lblPass);
+		panel.add(txtPass, "growx");
+		panel.add(rememberMe);
+		panel.add(lafToggle, "wrap");
+		panel.add(btnLogin, "gaptop 15, growx");
+		panel.add(signupText, "gaptop 10, center");
+
+		add(panel);
+	}
+
+	private void applyLookAndFeel(boolean dark) {
+		try {
+			if (dark) {
+				UIManager.setLookAndFeel(LoginLogoutFrame.DARK);
+			} else {
+				UIManager.setLookAndFeel(LoginLogoutFrame.LIGHT);
+			}
+		} catch (UnsupportedLookAndFeelException | ClassNotFoundException | InstantiationException
+				| IllegalAccessException ex) {
+			ex.printStackTrace();
+		}
+	}
 }
