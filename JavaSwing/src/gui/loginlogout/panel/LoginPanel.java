@@ -39,7 +39,6 @@ public class LoginPanel extends JPanel {
 		JLabel lblUser = new JLabel("아이디");
 		JTextField txtUser = new JTextField();
 		txtUser.putClientProperty("JTextField.placeholderText", "아이디 입력");
-		// 로그인 상태 유지된 값이 있으면 초기 아이디로 세팅
 		boolean remembered = PREFS.getBoolean("rememberMe", false);
 		if (remembered) {
 			txtUser.setText(PREFS.get("savedUser", ""));
@@ -50,21 +49,7 @@ public class LoginPanel extends JPanel {
 		txtPass.putClientProperty("JTextField.placeholderText", "비밀번호 입력");
 
 		JCheckBox rememberMe = new JCheckBox("아이디 저장");
-		// 초기 체크박스 상태
 		rememberMe.setSelected(remembered);
-
-		JCheckBox lafToggle = new JCheckBox("다크 테마");
-		boolean dark = PREFS.getBoolean("darkMode", false);
-		lafToggle.setSelected(dark);
-		applyLookAndFeel(dark);
-		SwingUtilities.updateComponentTreeUI(parentFrame);
-
-		lafToggle.addActionListener(e -> {
-			boolean sel = lafToggle.isSelected();
-			PREFS.putBoolean("darkMode", sel);
-			applyLookAndFeel(sel);
-			SwingUtilities.updateComponentTreeUI(parentFrame);
-		});
 
 		JButton btnLogin = new JButton("로그인");
 		Runnable doLogin = () -> {
@@ -72,7 +57,6 @@ public class LoginPanel extends JPanel {
 			String password = new String(txtPass.getPassword());
 			int userId = DB.login(username, password);
 			if (userId > 0) {
-				// 로그인 유지 설정 저장
 				PREFS.putBoolean("rememberMe", rememberMe.isSelected());
 				if (rememberMe.isSelected()) {
 					PREFS.put("savedUser", username);
@@ -121,7 +105,6 @@ public class LoginPanel extends JPanel {
 		panel.add(lblPass);
 		panel.add(txtPass, "growx");
 		panel.add(rememberMe);
-		panel.add(lafToggle, "wrap");
 		panel.add(btnLogin, "gaptop 15, growx");
 		panel.add(signupText, "gaptop 10, center");
 

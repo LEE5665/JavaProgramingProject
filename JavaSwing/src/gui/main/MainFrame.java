@@ -1,160 +1,186 @@
 package gui.main;
 
-import java.awt.BorderLayout;
-import java.awt.CardLayout;
-import java.awt.Color;
-import java.awt.Dimension;
-import java.awt.Font;
-import java.awt.Insets;
+import java.awt.*;
 import java.awt.event.ItemEvent;
 import java.util.prefs.Preferences;
-
-import javax.swing.BorderFactory;
-import javax.swing.ButtonGroup;
-import javax.swing.JFrame;
-import javax.swing.JPanel;
-import javax.swing.JSeparator;
-import javax.swing.JToggleButton;
-import javax.swing.SwingConstants;
-import javax.swing.SwingUtilities;
-import javax.swing.UIManager;
-import javax.swing.UnsupportedLookAndFeelException;
-
+import javax.swing.*;
+import javax.swing.border.EmptyBorder;
 import gui.main.panel.MemoPanel;
 import gui.main.panel.TodoPanel;
 import net.miginfocom.swing.MigLayout;
 
 public class MainFrame extends JFrame {
-	private static final Preferences PREFS = Preferences.userRoot().node("MyAppPrefs");
-	private final String LIGHT = "com.formdev.flatlaf.FlatLightLaf";
-	private final String DARK = "com.formdev.flatlaf.FlatDarculaLaf";
+    private static final Preferences PREFS = Preferences.userRoot().node("MyAppPrefs");
+    private final String LIGHT = "com.formdev.flatlaf.FlatLightLaf";
+    private final String DARK = "com.formdev.flatlaf.intellijthemes.FlatHiberbeeDarkIJTheme";
 
-	private int userId;
-	private JToggleButton todoButton, memoButton, themeToggle;
-	private ButtonGroup typeGroup;
-	private JPanel contentPanel;
-	private MemoPanel memoPanel;
-	private TodoPanel todoPanel;
+    private int userId;
+    private JToggleButton todoButton, memoButton;
+    private ButtonGroup typeGroup;
+    private JPanel contentPanel;
+    private MemoPanel memoPanel;
+    private TodoPanel todoPanel;
 
-	public MainFrame(int userId) {
-		this.userId = userId;
-		applySavedLookAndFeel();
+    public MainFrame(int userId) {
+        this.userId = userId;
+        applySavedLookAndFeel();
 
-		setTitle("일정 관리");
-		setSize(1200, 800);
-		setDefaultCloseOperation(EXIT_ON_CLOSE);
-		setLocationRelativeTo(null);
+        setTitle("일정 관리");
+        setSize(1200, 800);
+        setDefaultCloseOperation(EXIT_ON_CLOSE);
+        setLocationRelativeTo(null);
 
-		todoButton = createTypeToggle("To-Do List");
-		memoButton = createTypeToggle("메모장");
-		typeGroup = new ButtonGroup();
-		typeGroup.add(todoButton);
-		typeGroup.add(memoButton);
-		memoButton.setSelected(true);
+        
+        JPanel headerBar = new JPanel(new BorderLayout());
+        headerBar.setBorder(new EmptyBorder(0, 0, 0, 0));
+        headerBar.setBackground(UIManager.getColor("Panel.background"));
 
-		todoButton.addActionListener(e -> switchContent("todo"));
-		memoButton.addActionListener(e -> switchContent("memo"));
+        JLabel appTitle = new JLabel("일정 관리");
+        appTitle.setFont(new Font("Dialog", Font.BOLD, 22));
+        appTitle.setBorder(new EmptyBorder(0, 24, 0, 0));
+        appTitle.setForeground(UIManager.getColor("Label.foreground"));
 
-		themeToggle = new JToggleButton();
-		themeToggle.setFocusPainted(false);
-		themeToggle.setFont(new Font("Dialog", Font.PLAIN, 16));
-		themeToggle.setBorder(BorderFactory.createEmptyBorder(5, 0, 5, 0));
-		themeToggle.setPreferredSize(new Dimension(40, 30));
-		themeToggle.setMargin(new Insets(0, 0, 0, 0));
-		themeToggle.setHorizontalTextPosition(SwingConstants.CENTER);
-		themeToggle.setVerticalTextPosition(SwingConstants.CENTER);
+        
+        JToggleButton themeToggle = new JToggleButton();
+        themeToggle.setFocusPainted(false);
+        themeToggle.setBorderPainted(false);
+        themeToggle.setContentAreaFilled(false);
+        themeToggle.setFont(new Font("Dialog", Font.PLAIN, 22));
+        themeToggle.setPreferredSize(new Dimension(44, 44));
+        boolean dark = PREFS.getBoolean("darkMode", false);
+        themeToggle.setSelected(dark);
+        themeToggle.setText(dark ? "🌜" : "🌞");
+        themeToggle.setToolTipText(dark ? "다크 모드" : "라이트 모드");
+        themeToggle.addItemListener(e -> {
+            boolean sel = e.getStateChange() == ItemEvent.SELECTED;
+            PREFS.putBoolean("darkMode", sel);
+            try {
+                UIManager.setLookAndFeel(sel ? DARK : LIGHT);
+            } catch (Exception ex) {
+                ex.printStackTrace();
+            }
+            themeToggle.setText(sel ? "🌜" : "🌞");
+            themeToggle.setToolTipText(sel ? "다크 모드" : "라이트 모드");
+            SwingUtilities.updateComponentTreeUI(this);
+            memoPanel.updateUI();
+            todoPanel.updateUI();
 
-		boolean dark = PREFS.getBoolean("darkMode", false);
-		themeToggle.setSelected(dark);
-		themeToggle.setText(dark ? "🌜" : "🌞");
-		themeToggle.setToolTipText(dark ? "다크 모드" : "라이트 모드");
-		Color fg = UIManager.getColor("ToggleButton.foreground");
-		Color selFg = UIManager.getColor("ToggleButton.select");
-		Color bg = UIManager.getColor("ToggleButton.background");
-		Color selBg = UIManager.getColor("ToggleButton.focus");
-		themeToggle.setForeground(dark ? selFg : fg);
-		themeToggle.setBackground(dark ? selBg : bg);
-		themeToggle.addItemListener(e -> {
-			boolean sel = e.getStateChange() == ItemEvent.SELECTED;
-			PREFS.putBoolean("darkMode", sel);
-			try {
-				UIManager.setLookAndFeel(sel ? DARK : LIGHT);
-			} catch (UnsupportedLookAndFeelException | ClassNotFoundException | InstantiationException
-					| IllegalAccessException ex) {
-				ex.printStackTrace();
-			}
-			themeToggle.setText(sel ? "🌜" : "🌞");
-			themeToggle.setToolTipText(sel ? "다크 모드" : "라이트 모드");
-			Color fg2 = UIManager.getColor("ToggleButton.foreground");
-			Color selFg2 = UIManager.getColor("ToggleButton.select");
-			Color bg2 = UIManager.getColor("ToggleButton.background");
-			Color selBg2 = UIManager.getColor("ToggleButton.focus");
-			themeToggle.setForeground(sel ? selFg2 : fg2);
-			themeToggle.setBackground(sel ? selBg2 : bg2);
-			SwingUtilities.updateComponentTreeUI(this);
-			memoPanel.updateUI();
-			todoPanel.updateUI();
-		});
+            
+            for (AbstractButton btn : new AbstractButton[] { todoButton, memoButton }) {
+                for (java.awt.event.ItemListener il : btn.getItemListeners()) {
+                    il.itemStateChanged(
+                        new java.awt.event.ItemEvent(btn, java.awt.event.ItemEvent.ITEM_STATE_CHANGED,
+                                btn, btn.isSelected() ? ItemEvent.SELECTED : ItemEvent.DESELECTED)
+                    );
+                }
+            }
+        });
 
-		JPanel typePanel = new JPanel(new MigLayout("insets 0, wrap 3", "[50%][50%][pref!]"));
-		typePanel.add(todoButton, "growx");
-		typePanel.add(memoButton, "growx");
-		typePanel.add(themeToggle, "align right");
+        JPanel rightPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 4));
+        rightPanel.setOpaque(false);
+        rightPanel.add(themeToggle);
 
-		JSeparator separator = new JSeparator();
-		separator.setForeground(UIManager.getColor("Separator.foreground"));
+        headerBar.add(appTitle, BorderLayout.WEST);
+        headerBar.add(rightPanel, BorderLayout.EAST);
 
-		JPanel header = new JPanel(new BorderLayout());
-		header.add(typePanel, BorderLayout.CENTER);
-		header.add(separator, BorderLayout.SOUTH);
+        
+        JPanel tabPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 20, 8));
+        tabPanel.setOpaque(false);
 
-		contentPanel = new JPanel(new CardLayout());
-		memoPanel = new MemoPanel(userId);
-		todoPanel = new TodoPanel(userId);
-		contentPanel.add(memoPanel, "memo");
-		contentPanel.add(todoPanel, "todo");
+        todoButton = createTypeToggle("To-Do List");
+        memoButton = createTypeToggle("메모장");
+        typeGroup = new ButtonGroup();
+        typeGroup.add(todoButton);
+        typeGroup.add(memoButton);
 
-		add(header, BorderLayout.NORTH);
-		add(contentPanel, BorderLayout.CENTER);
+        
+        Color accent = UIManager.getColor("Component.accentColor"); 
+        if (accent == null) accent = UIManager.getColor("Component.focusColor");
+        if (accent == null) accent = new Color(80, 140, 200); 
 
-		switchContent("memo");
-	}
+        todoButton.putClientProperty("accent", accent);
+        memoButton.putClientProperty("accent", accent);
 
-	private void applySavedLookAndFeel() {
-		boolean dark = PREFS.getBoolean("darkMode", false);
-		try {
-			UIManager.setLookAndFeel(dark ? DARK : LIGHT);
-		} catch (UnsupportedLookAndFeelException | ClassNotFoundException | InstantiationException
-				| IllegalAccessException e) {
-			e.printStackTrace();
-		}
-	}
+        memoButton.setSelected(true);
 
-	private JToggleButton createTypeToggle(String text) {
-		JToggleButton btn = new JToggleButton("<html><div style='text-align:center;'>" + text + "</div></html>");
-		btn.setFocusPainted(false);
-		btn.setFont(new Font("Dialog", Font.BOLD, 16));
-		btn.setBorder(BorderFactory.createEmptyBorder(10, 0, 10, 0));
-		Color fgNormal = UIManager.getColor("ToggleButton.foreground");
-		Color fgSelected = UIManager.getColor("ToggleButton.select");
-		Color bgNormal = UIManager.getColor("ToggleButton.background");
-		Color bgSelected = UIManager.getColor("ToggleButton.focus");
-		boolean initiallySelected = btn.isSelected();
-		btn.setForeground(initiallySelected ? fgSelected : fgNormal);
-		btn.setBackground(initiallySelected ? bgSelected : bgNormal);
-		btn.addItemListener(e -> {
-			boolean sel = btn.isSelected();
-			Color fg2 = UIManager.getColor("ToggleButton.foreground");
-			Color selFg2 = UIManager.getColor("ToggleButton.select");
-			Color bg2 = UIManager.getColor("ToggleButton.background");
-			Color selBg2 = UIManager.getColor("ToggleButton.focus");
-			btn.setForeground(sel ? selFg2 : fg2);
-			btn.setBackground(sel ? selBg2 : bg2);
-		});
-		return btn;
-	}
+        todoButton.addActionListener(e -> switchContent("todo"));
+        memoButton.addActionListener(e -> switchContent("memo"));
 
-	private void switchContent(String name) {
-		((CardLayout) contentPanel.getLayout()).show(contentPanel, name);
-	}
+        tabPanel.add(todoButton);
+        tabPanel.add(memoButton);
+
+        
+        JPanel topPanel = new JPanel(new BorderLayout());
+        topPanel.setOpaque(false);
+        topPanel.add(headerBar, BorderLayout.NORTH);
+        topPanel.add(tabPanel, BorderLayout.CENTER);
+
+        JSeparator separator = new JSeparator();
+        separator.setForeground(UIManager.getColor("Separator.foreground"));
+        topPanel.add(separator, BorderLayout.SOUTH);
+
+        
+        contentPanel = new JPanel(new CardLayout());
+        memoPanel = new MemoPanel(userId);
+        todoPanel = new TodoPanel(userId);
+        contentPanel.add(memoPanel, "memo");
+        contentPanel.add(todoPanel, "todo");
+
+        add(topPanel, BorderLayout.NORTH);
+        add(contentPanel, BorderLayout.CENTER);
+
+        switchContent("memo");
+    }
+
+    private void applySavedLookAndFeel() {
+        boolean dark = PREFS.getBoolean("darkMode", false);
+        try {
+            UIManager.setLookAndFeel(dark ? DARK : LIGHT);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    private JToggleButton createTypeToggle(String text) {
+        JToggleButton btn = new JToggleButton(text);
+        btn.setFocusPainted(false);
+        btn.setFont(new Font("Dialog", Font.BOLD, 16));
+        btn.setOpaque(false);
+        btn.setContentAreaFilled(false);
+        btn.setBorder(BorderFactory.createEmptyBorder(7, 30, 7, 30));
+        btn.setForeground(UIManager.getColor("Label.foreground"));
+        btn.setBackground(new Color(0,0,0,0));
+
+        btn.addItemListener(e -> {
+            boolean sel = btn.isSelected();
+            Color accent = (Color) btn.getClientProperty("accent");
+            btn.setFont(btn.getFont().deriveFont(sel ? 18f : 16f));
+            
+            btn.setForeground(sel
+                ? accent != null ? blend(UIManager.getColor("Label.foreground"), accent, 0.38f) : UIManager.getColor("Label.foreground").darker()
+                : UIManager.getColor("Label.foreground"));
+            btn.setBorder(sel
+                ? BorderFactory.createCompoundBorder(
+                    BorderFactory.createMatteBorder(0, 0, 3, 0, accent != null ? accent : new Color(80, 140, 200)),
+                    BorderFactory.createEmptyBorder(4, 30, 3, 30)
+                  )
+                : BorderFactory.createEmptyBorder(7, 30, 7, 30));
+            btn.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        });
+        return btn;
+    }
+
+    
+    private static Color blend(Color c1, Color c2, float ratio) {
+        if (c1 == null || c2 == null) return c1 != null ? c1 : c2;
+        float ir = 1.0f - ratio;
+        int r = (int)(c1.getRed() * ir + c2.getRed() * ratio);
+        int g = (int)(c1.getGreen() * ir + c2.getGreen() * ratio);
+        int b = (int)(c1.getBlue() * ir + c2.getBlue() * ratio);
+        return new Color(r, g, b);
+    }
+
+    private void switchContent(String name) {
+        ((CardLayout) contentPanel.getLayout()).show(contentPanel, name);
+    }
 }

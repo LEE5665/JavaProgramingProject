@@ -50,7 +50,6 @@ public class Memo {
 		return createdAt;
 	}
 
-	// --- 필요할 경우 세터도 추가 가능 ---
 	public void setContent(String content) {
 		this.content = content;
 	}

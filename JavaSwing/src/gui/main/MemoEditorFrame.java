@@ -1,60 +1,88 @@
 package gui.main;
 
-import java.awt.Dimension;
-import java.awt.FlowLayout;
-import java.awt.Font;
-import java.util.function.Consumer;
-
-import javax.swing.JButton;
-import javax.swing.JDialog;
-import javax.swing.JLabel;
-import javax.swing.JOptionPane;
-import javax.swing.JPanel;
-import javax.swing.JScrollPane;
-import javax.swing.JTextArea;
-
-import com.formdev.flatlaf.FlatClientProperties;
-
-import net.miginfocom.swing.MigLayout;
+import java.awt.*;
+import java.awt.event.*;
+import javax.swing.*;
 
 public class MemoEditorFrame extends JDialog {
-	public MemoEditorFrame(java.awt.Window owner, String initialText, Consumer<String> onSave) {
-		super(owner, "메모 입력", ModalityType.APPLICATION_MODAL);
-		setSize(500, 400);
-		setLocationRelativeTo(owner);
-		setDefaultCloseOperation(DISPOSE_ON_CLOSE);
+    private JTextArea textArea;
 
-		JPanel panel = new JPanel(new MigLayout("fill, insets 20, wrap 1", "[grow,fill]"));
-		panel.putClientProperty(FlatClientProperties.STYLE, "arc:20");
+    public MemoEditorFrame(Window owner, String title, String initialContent, java.util.function.Consumer<String> onSave) {
+        super(owner, title, ModalityType.APPLICATION_MODAL);
+        setLayout(new BorderLayout(0, 16));
+        setSize(380, 230);
+        setResizable(false);
+        setLocationRelativeTo(owner);
+        getContentPane().setBackground(UIManager.getColor("Panel.background"));
 
-		JLabel titleLabel = new JLabel("메모 내용 입력");
-		titleLabel.setFont(new Font("Dialog", Font.BOLD, 16));
-		panel.add(titleLabel);
+        textArea = new JTextArea(initialContent == null ? "" : initialContent, 7, 26);
+        textArea.setFont(new Font("Malgun Gothic", Font.PLAIN, 15));
+        textArea.setLineWrap(true);
+        textArea.setWrapStyleWord(true);
+        textArea.setBorder(BorderFactory.createCompoundBorder(
+            BorderFactory.createLineBorder(UIManager.getColor("Component.borderColor")),
+            BorderFactory.createEmptyBorder(8, 10, 8, 10)
+        ));
+        textArea.setBackground(UIManager.getColor("TextField.background"));
+        textArea.setForeground(UIManager.getColor("Label.foreground"));
 
-		JTextArea textArea = new JTextArea(initialText);
-		textArea.setFont(new Font("Dialog", Font.PLAIN, 14));
-		textArea.setLineWrap(true);
-		textArea.setWrapStyleWord(true);
-		JScrollPane scrollPane = new JScrollPane(textArea);
-		scrollPane.setPreferredSize(new Dimension(400, 250));
-		panel.add(scrollPane, "grow, h 250!");
+        JPanel btnPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 15, 6));
+        btnPanel.setBackground(UIManager.getColor("Panel.background"));
 
-		JButton saveButton = new JButton("저장");
-		saveButton.addActionListener(e -> {
-			String content = textArea.getText().trim();
-			if (!content.isEmpty()) {
-				onSave.accept(content);
-				dispose();
-			} else {
-				JOptionPane.showMessageDialog(this, "내용을 입력해주세요.", "경고", JOptionPane.WARNING_MESSAGE);
-			}
-		});
+        JButton btnSave = new JButton("저장");
+        btnSave.setFont(new Font("Malgun Gothic", Font.BOLD, 13));
+        btnSave.setPreferredSize(new Dimension(80, 32));
+        btnSave.addActionListener(e -> doSave(onSave));
 
-		JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
-		buttonPanel.setOpaque(false);
-		buttonPanel.add(saveButton);
+        JButton btnCancel = new JButton("취소");
+        btnCancel.setFont(new Font("Malgun Gothic", Font.PLAIN, 13));
+        btnCancel.setPreferredSize(new Dimension(80, 32));
+        btnCancel.addActionListener(e -> {
+            dispose();
+        });
 
-		panel.add(buttonPanel, "dock south");
-		setContentPane(panel);
-	}
+        textArea.addKeyListener(new KeyAdapter() {
+            public void keyPressed(KeyEvent e) {
+                if ((e.getKeyCode() == KeyEvent.VK_ENTER) && (e.isControlDown() || e.isMetaDown())) {
+                    doSave(onSave);
+                }
+                if (e.getKeyCode() == KeyEvent.VK_ESCAPE) {
+                    dispose();
+                    onSave.accept(null);
+                }
+            }
+        });
+
+        btnPanel.add(btnSave);
+        btnPanel.add(btnCancel);
+
+        JPanel padPanel = new JPanel(new BorderLayout());
+        padPanel.setBackground(getBackground());
+        padPanel.setBorder(BorderFactory.createEmptyBorder(18, 18, 0, 18));
+        padPanel.add(new JScrollPane(textArea,
+                JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED,
+                JScrollPane.HORIZONTAL_SCROLLBAR_NEVER), BorderLayout.CENTER);
+
+        add(padPanel, BorderLayout.CENTER);
+        add(btnPanel, BorderLayout.SOUTH);
+
+        addWindowListener(new WindowAdapter() {
+            @Override
+            public void windowOpened(WindowEvent e) {
+                textArea.requestFocus();
+            }
+        });
+    }
+
+    private void doSave(java.util.function.Consumer<String> onSave) {
+        String content = textArea.getText();
+        if (content == null) content = "";
+        content = content.trim();
+        if (content.isEmpty()) {
+            JOptionPane.showMessageDialog(this, "내용을 입력하세요!", "경고", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+        dispose();
+        onSave.accept(content);
+    }
 }

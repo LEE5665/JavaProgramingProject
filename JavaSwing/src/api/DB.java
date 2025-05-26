@@ -186,7 +186,7 @@ public class DB {
 		String sql = "UPDATE memo SET fix_flag = ?, update_at = ? WHERE id = ?";
 		try (Connection conn = getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
 			ps.setBoolean(1, fixFlag);
-			// 고정 시에도 업데이트 시간 갱신
+			
 			ps.setString(2, LocalDateTime.now().toString());
 			ps.setInt(3, memoId);
 			ps.executeUpdate();
