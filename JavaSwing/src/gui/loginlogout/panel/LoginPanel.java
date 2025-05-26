@@ -30,7 +30,7 @@ public class LoginPanel extends JPanel {
 		super(new MigLayout("align center center"));
 
 		JPanel panel = new JPanel(new MigLayout("wrap 1", "[350!]"));
-		panel.setBorder(BorderFactory.createEmptyBorder(30, 30, 30, 30));
+		panel.setBorder(BorderFactory.createEmptyBorder(110, 30, 30, 30));
 
 		JLabel title = new JLabel("일정 관리");
 		title.setFont(new Font("Dialog", Font.BOLD, 20));
