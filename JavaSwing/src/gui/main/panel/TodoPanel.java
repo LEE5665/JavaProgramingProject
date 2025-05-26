@@ -1,249 +1,171 @@
 package gui.main.panel;
 
-import java.awt.BorderLayout;
-import java.awt.Color;
-import java.awt.Component;
-import java.awt.Container;
-import java.awt.Dimension;
-import java.awt.Font;
-import java.awt.Insets;
-import java.time.LocalDate;
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
-
-import javax.swing.AbstractButton;
-import javax.swing.JButton;
-import javax.swing.JLabel;
-import javax.swing.JLayeredPane;
-import javax.swing.JPanel;
-import javax.swing.JScrollPane;
-import javax.swing.Timer;
-import javax.swing.UIManager;
-import javax.swing.border.EmptyBorder;
-
-import com.github.lgooddatepicker.components.DatePicker;
-import com.github.lgooddatepicker.components.DatePickerSettings;
-import com.github.lgooddatepicker.zinternaltools.DateChangeEvent;
-
 import api.model.Todo;
 import api.model.TodoDAO;
-import net.miginfocom.swing.MigLayout;
+
+import javax.swing.*;
+import javax.swing.border.EmptyBorder;
+import java.awt.*;
+import java.time.LocalDate;
+import java.util.List;
+import java.util.stream.Collectors;
 
 public class TodoPanel extends JPanel {
-	private final int userId;
-	private LocalDate currentDate;
-	private final JLabel dayLabel = new JLabel();
-	private final JButton calBtn = new JButton("📅");
-	private final JButton todayBtn = new JButton("오늘");
-	private final JButton addBtn = new JButton("＋ 할 일 추가");
-	private final JButton prevBtn = new JButton("◀");
-	private final JButton nextBtn = new JButton("▶");
-	private final JLayeredPane layer = new JLayeredPane();
-	private final DatePicker datePicker;
-	private final JButton arrowBtn;
-	private JScrollPane currentScroll;
+    private int userId;
 
-	public TodoPanel(int userId) {
-		this.userId = userId;
-		setLayout(new BorderLayout());
-		DatePickerSettings set = new DatePickerSettings(Locale.KOREAN);
-		set.setAllowEmptyDates(false);
-		set.setVisibleTodayButton(false);
-		set.setVisibleClearButton(false);
-		datePicker = new DatePicker(set);
-		datePicker.setPreferredSize(new Dimension(1, 1));
-		datePicker.getComponentDateTextField().setVisible(false);
-		arrowBtn = datePicker.getComponentToggleCalendarButton();
-		arrowBtn.setMargin(new Insets(0, 0, 0, 0));
-		arrowBtn.setText("");
-		arrowBtn.setFocusable(false);
-		arrowBtn.setOpaque(false);
-		arrowBtn.setContentAreaFilled(false);
-		arrowBtn.setBorderPainted(false);
-		arrowBtn.setPreferredSize(new Dimension(1, 1));
-		datePicker.addDateChangeListener((DateChangeEvent e) -> {
-			LocalDate d = e.getNewDate();
-			if (d != null)
-				loadPage(d, d.isAfter(currentDate), true);
-		});
-		buildHeader();
-		buildArrows();
-		add(layer, BorderLayout.CENTER);
-		loadPage(LocalDate.now(), false, false);
-		addComponentListener(new java.awt.event.ComponentAdapter() {
-			public void componentResized(java.awt.event.ComponentEvent e) {
-				if (currentScroll != null) {
-					currentScroll.setBounds(0, 0, layer.getWidth(), layer.getHeight());
-					layer.revalidate();
-				}
-			}
-		});
-		UIManager.addPropertyChangeListener(evt -> {
-			if ("lookAndFeel".equals(evt.getPropertyName())) {
-				applyTheme(TodoPanel.this);
-				if (currentScroll != null)
-					applyTheme(currentScroll);
-				applyTheme(datePicker);
-				revalidate();
-				repaint();
-			}
-		});
-		applyTheme(this);
-	}
+    // 좌측: 날짜 선택, 정렬 옵션, 필터
+    private JList<LocalDate> dateList;
+    private DefaultListModel<LocalDate> dateListModel;
+    private JComboBox<String> sortCombo;
 
-	private void applyTheme(Component comp) {
-		Color bg = UIManager.getColor("Panel.background");
-		Color fg = UIManager.getColor("Label.foreground");
-		if (comp instanceof JScrollPane sp) {
-			sp.getViewport().getView().setBackground(bg);
-			sp.setBackground(bg);
-			applyTheme(sp.getViewport().getView());
-		} else if (comp instanceof JPanel p)
-			p.setBackground(bg);
-		if (comp instanceof JLabel l)
-			l.setForeground(fg);
-		if (comp instanceof AbstractButton b) {
-			b.setBackground(bg);
-			b.setForeground(fg);
-		}
-		if (comp instanceof DatePicker dp) {
-			dp.getComponentDateTextField().setBackground(bg);
-			dp.getComponentDateTextField().setForeground(fg);
-			arrowBtn.setBackground(bg);
-		}
-		if (comp instanceof Container c)
-			for (Component ch : c.getComponents())
-				applyTheme(ch);
-	}
+    // 우측: 할 일 목록, 추가 버튼
+    private JPanel todoListPanel;
+    private JScrollPane todoScrollPane;
 
-	private void buildHeader() {
-		dayLabel.setFont(getFont().deriveFont(Font.BOLD, 16f));
-		dayLabel.setBorder(new EmptyBorder(0, 8, 0, 8));
-		calBtn.addActionListener(e -> {
-			datePicker.setDate(currentDate);
-			datePicker.openPopup();
-			datePicker.setSize(400, 300);
-		});
-		todayBtn.addActionListener(e -> {
-			LocalDate today = LocalDate.now();
-			boolean animate = !today.equals(currentDate);
-			boolean slideLeft = today.isAfter(currentDate);
-			loadPage(today, slideLeft, animate);
-		});
-		addBtn.addActionListener(e -> {
-			TodoDAO.insert(new Todo(userId, null, 0, "새로운 할 일", "", currentDate, null, null));
-			reloadCurrent();
-		});
-		JPanel head = new JPanel(new MigLayout("insets 4", "[][5!][][grow]push[]", "[]"));
-		head.add(dayLabel);
-		head.add(calBtn);
-		head.add(todayBtn);
-		head.add(datePicker, "w 1!, h 1!, growx");
-		head.add(addBtn);
-		add(head, BorderLayout.NORTH);
-	}
+    public TodoPanel(int userId) {
+        this.userId = userId;
+        setLayout(new BorderLayout());
 
-	private void buildArrows() {
-		Dimension d = new Dimension(45, 45);
-		prevBtn.setPreferredSize(d);
-		nextBtn.setPreferredSize(d);
-		for (JButton b : List.of(prevBtn, nextBtn)) {
-			b.setFocusPainted(false);
-			b.setOpaque(false);
-			b.setContentAreaFilled(false);
-			b.setBorderPainted(false);
-			b.setFont(b.getFont().deriveFont(Font.BOLD, 18f));
-		}
-		prevBtn.addActionListener(e -> loadPage(currentDate.minusDays(1), false, true));
-		nextBtn.addActionListener(e -> loadPage(currentDate.plusDays(1), true, true));
-		add(prevBtn, BorderLayout.WEST);
-		add(nextBtn, BorderLayout.EAST);
-	}
+        // 1. 왼쪽: 날짜/정렬
+        JPanel leftPanel = new JPanel(new BorderLayout(0, 12));
+        leftPanel.setPreferredSize(new Dimension(190, 999));
+        leftPanel.setBorder(new EmptyBorder(18, 14, 18, 6));
+        leftPanel.setBackground(UIManager.getColor("Panel.background"));
 
-	private void loadPage(LocalDate target, boolean slideLeft, boolean animate) {
-		JScrollPane next = createPage(target);
-		applyTheme(next);
-		JScrollPane cur = currentScroll;
-		int w = layer.getWidth();
-		if (!animate || cur == null) {
-			layer.removeAll();
-			next.setBounds(0, 0, w, layer.getHeight());
-			layer.add(next, JLayeredPane.DEFAULT_LAYER, 0);
-		} else {
-			int startX = slideLeft ? w : -w;
-			int dir = slideLeft ? -1 : 1;
-			next.setBounds(startX, 0, w, layer.getHeight());
-			layer.add(next, JLayeredPane.DEFAULT_LAYER, 0);
-			animatePageTurn(cur, next, dir);
-		}
-		currentScroll = next;
-		currentDate = target;
-		dayLabel.setText(String.format("%s (%s)", target,
-				target.getDayOfWeek().getDisplayName(java.time.format.TextStyle.SHORT, Locale.KOREAN)));
-	}
+        JLabel dateLabel = new JLabel("계획 날짜");
+        dateLabel.setFont(new Font("Dialog", Font.BOLD, 15));
+        dateLabel.setBorder(new EmptyBorder(0, 0, 8, 0));
+        leftPanel.add(dateLabel, BorderLayout.NORTH);
 
-	private void animatePageTurn(JScrollPane cur, JScrollPane next, int dir) {
-		int w = layer.getWidth();
-		int duration = 450;
-		int fps = 60;
-		long start = System.currentTimeMillis();
-		Timer timer = new Timer(1000 / fps, null);
-		timer.addActionListener(e -> {
-			float t = (System.currentTimeMillis() - start) / (float) duration;
-			if (t > 1f)
-				t = 1f;
-			float ease = 1 - (float) Math.pow(1 - t, 3);
-			int curX = Math.round(ease * w * dir);
-			int nextX = Math.round((ease - 1) * w * dir);
-			cur.setLocation(curX, 0);
-			next.setLocation(nextX, 0);
-			if (t >= 1f) {
-				next.setLocation(0, 0);
-				layer.remove(cur);
-				layer.repaint();
-				((Timer) e.getSource()).stop();
-			}
-		});
-		timer.start();
-	}
+        dateListModel = new DefaultListModel<>();
+        dateList = new JList<>(dateListModel);
+        dateList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+        dateList.setFont(new Font("Dialog", Font.PLAIN, 13));
+        JScrollPane dateScroll = new JScrollPane(dateList);
+        dateScroll.setPreferredSize(new Dimension(150, 220));
+        leftPanel.add(dateScroll, BorderLayout.CENTER);
 
-	void reloadCurrent() {
-		loadPage(currentDate, false, false);
-	}
+        sortCombo = new JComboBox<>(new String[]{"기간 오름차순", "기간 내림차순", "가장 빠른 일정", "미완료 먼저"});
+        sortCombo.setFont(new Font("Dialog", Font.PLAIN, 13));
+        sortCombo.setMaximumSize(new Dimension(150, 32));
+        leftPanel.add(sortCombo, BorderLayout.SOUTH);
 
-	private List<Todo> sortHierarchy(List<Todo> list) {
-		Map<Integer, List<Todo>> child = new LinkedHashMap<>();
-		List<Todo> roots = new ArrayList<>();
-		for (Todo t : list)
-			if (t.getParentId() == null)
-				roots.add(t);
-			else
-				child.computeIfAbsent(t.getParentId(), k -> new ArrayList<>()).add(t);
-		List<Todo> out = new ArrayList<>();
-		for (Todo r : roots)
-			addWithChildren(out, r, child);
-		return out;
-	}
+        add(leftPanel, BorderLayout.WEST);
 
-	private void addWithChildren(List<Todo> out, Todo p, Map<Integer, List<Todo>> child) {
-		out.add(p);
-		if (child.containsKey(p.getId()))
-			for (Todo c : child.get(p.getId()))
-				addWithChildren(out, c, child);
-	}
+        // 2. 오른쪽: 할 일 + 추가
+        JPanel rightPanel = new JPanel(new BorderLayout(0, 0));
+        rightPanel.setBorder(new EmptyBorder(18, 4, 18, 16));
+        rightPanel.setBackground(UIManager.getColor("Panel.background"));
 
-	private JScrollPane createPage(LocalDate date) {
-		JPanel body = new JPanel(new MigLayout("insets 10 20 10 20, gapy 8", "[grow]", ""));
-		List<Todo> list = sortHierarchy(TodoDAO.listByDate(userId, date));
-		list.forEach(t -> body.add(new TodoItemPanel(t, this::reloadCurrent), "growx, wrap"));
-		JScrollPane sp = new JScrollPane(body, JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED,
-				JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
-		sp.setBorder(null);
-		sp.getVerticalScrollBar().setUnitIncrement(16);
-		sp.setBounds(0, 0, layer.getWidth(), layer.getHeight());
-		return sp;
-	}
+        // 할 일 목록
+        todoListPanel = new JPanel();
+        todoListPanel.setLayout(new BoxLayout(todoListPanel, BoxLayout.Y_AXIS));
+        todoListPanel.setOpaque(false);
+        todoScrollPane = new JScrollPane(todoListPanel);
+        todoScrollPane.setBorder(null);
+
+        rightPanel.add(todoScrollPane, BorderLayout.CENTER);
+
+        // 추가 버튼
+        JButton addBtn = new JButton("+ 계획 추가");
+        addBtn.setFont(new Font("Dialog", Font.BOLD, 14));
+        addBtn.setPreferredSize(new Dimension(120, 40));
+        addBtn.addActionListener(e -> openTodoEditor(null));
+        JPanel addPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
+        addPanel.setOpaque(false);
+        addPanel.add(addBtn);
+        rightPanel.add(addPanel, BorderLayout.NORTH);
+
+        add(rightPanel, BorderLayout.CENTER);
+
+        // 이벤트: 날짜/정렬 선택시 새로고침
+        dateList.addListSelectionListener(e -> { if (!e.getValueIsAdjusting()) reloadTodos(); });
+        sortCombo.addActionListener(e -> reloadTodos());
+
+        reloadDateList();
+    }
+
+    private void reloadDateList() {
+        dateListModel.clear();
+        List<LocalDate> dates = TodoDAO.listAllDates(userId);
+        for (LocalDate d : dates) dateListModel.addElement(d);
+
+        if (!dates.isEmpty()) dateList.setSelectedIndex(0);
+        else reloadTodos();
+    }
+
+    private void reloadTodos() {
+        todoListPanel.removeAll();
+        LocalDate selDate = dateList.getSelectedValue();
+
+        if (selDate == null) {
+            todoListPanel.add(new JLabel("날짜를 선택하세요."));
+        } else {
+            List<Todo> todos = TodoDAO.listByDate(userId, selDate);
+
+            // 정렬
+            switch ((String) sortCombo.getSelectedItem()) {
+                case "기간 내림차순":
+                    todos = todos.stream().sorted((a, b) -> b.getStartDate().compareTo(a.getStartDate())).collect(Collectors.toList());
+                    break;
+                case "가장 빠른 일정":
+                    todos = todos.stream().sorted((a, b) -> a.getStartDate().compareTo(b.getStartDate())).collect(Collectors.toList());
+                    break;
+                case "미완료 먼저":
+                    todos = todos.stream().sorted((a, b) -> Boolean.compare(a.isCompleted(), b.isCompleted())).collect(Collectors.toList());
+                    break;
+                default: // 오름차순
+                    todos = todos.stream().sorted((a, b) -> a.getStartDate().compareTo(b.getStartDate())).collect(Collectors.toList());
+                    break;
+            }
+
+            if (todos.isEmpty()) {
+                todoListPanel.add(new JLabel("해당 날짜에 할 일이 없습니다."));
+            } else {
+                for (Todo todo : todos) {
+                    TodoItemPanel panel = new TodoItemPanel(todo,
+                        () -> { // 토글
+                            TodoDAO.toggleCompleted(todo.getId(), !todo.isCompleted());
+                            reloadTodos();
+                        },
+                        () -> openTodoEditor(todo),
+                        () -> {
+                            TodoDAO.delete(todo.getId());
+                            reloadTodos();
+                        }
+                    );
+                    todoListPanel.add(panel);
+                    todoListPanel.add(Box.createVerticalStrut(8));
+                }
+            }
+        }
+
+        todoListPanel.revalidate();
+        todoListPanel.repaint();
+    }
+
+    private void openTodoEditor(Todo todo) {
+        TodoEditorFrame frame = new TodoEditorFrame(
+            SwingUtilities.getWindowAncestor(this),
+            todo == null ? "계획 추가" : "계획 수정",
+            todo == null ? "" : todo.getTitle(),
+            todo == null ? "" : todo.getNote(),
+            todo == null ? null : todo.getStartDate(),
+            todo == null ? null : todo.getEndDate(),
+            (title, note, start, end) -> {
+                if (todo == null) {
+                    Todo newTodo = new Todo(userId, null, 0, title, note, start, end);
+                    TodoDAO.insert(newTodo);
+                } else {
+                    todo.setTitle(title);
+                    todo.setNote(note);
+                    todo.setStartDate(start);
+                    todo.setEndDate(end);
+                    TodoDAO.update(todo);
+                }
+                reloadDateList();
+            }
+        );
+        frame.setVisible(true);
+    }
 }

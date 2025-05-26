@@ -38,32 +38,48 @@ public class DB {
 	}
 
 	private static void initializeSchema() throws SQLException {
-		try (Connection conn = getConnection(); Statement stmt = conn.createStatement()) {
+	    try (Connection conn = getConnection(); Statement stmt = conn.createStatement()) {
 
-			/* ---------------- users ---------------- */
-			stmt.execute("CREATE TABLE IF NOT EXISTS users (" + " id INTEGER PRIMARY KEY AUTOINCREMENT,"
-					+ " username TEXT UNIQUE NOT NULL," + " password TEXT NOT NULL" + ")");
-			stmt.execute("CREATE INDEX IF NOT EXISTS idx_users_username ON users(username)");
+	        // ① users 테이블 생성
+	        stmt.execute("CREATE TABLE IF NOT EXISTS users ("
+	            + " id INTEGER PRIMARY KEY AUTOINCREMENT,"
+	            + " username TEXT UNIQUE NOT NULL,"
+	            + " password TEXT NOT NULL"
+	            + ")");
 
-			/* ---------------- memo ---------------- */
-			stmt.execute("CREATE TABLE IF NOT EXISTS memo (" + " id INTEGER PRIMARY KEY AUTOINCREMENT,"
-					+ " user_id INTEGER," + " content TEXT," + " fix_flag BOOLEAN DEFAULT 0,"
-					+ " order_index INTEGER DEFAULT 0," + " update_at TEXT," + " created_at TEXT,"
-					+ " FOREIGN KEY(user_id) REFERENCES users(id)" + ")");
-			/* ---------------- todos ---------------- */
-			stmt.execute("CREATE TABLE IF NOT EXISTS todos (" + " id INTEGER PRIMARY KEY AUTOINCREMENT,"
-					+ " user_id INTEGER NOT NULL," + " parent_id INTEGER," + " depth INTEGER DEFAULT 0,"
-					+ " title TEXT NOT NULL," + " note TEXT," + " todo_date TEXT NOT NULL," + " start_time TEXT,"
-					+ " end_time TEXT," + " completed INTEGER DEFAULT 0," + " seq INTEGER NOT NULL DEFAULT 0,"
-					+ " created_at TEXT DEFAULT (datetime('now','localtime')),"
-					+ " updated_at TEXT DEFAULT (datetime('now','localtime')),"
-					+ " FOREIGN KEY(user_id)  REFERENCES users(id)," + " FOREIGN KEY(parent_id) REFERENCES todos(id)"
-					+ ")");
+	        // ② memo 테이블 생성 (이미 코드에 있음, 생략 가능)
+	        stmt.execute("CREATE TABLE IF NOT EXISTS memo ("
+	            + " id INTEGER PRIMARY KEY AUTOINCREMENT,"
+	            + " user_id INTEGER,"
+	            + " content TEXT,"
+	            + " fix_flag BOOLEAN DEFAULT 0,"
+	            + " order_index INTEGER DEFAULT 0,"
+	            + " update_at TEXT,"
+	            + " created_at TEXT,"
+	            + " FOREIGN KEY(user_id) REFERENCES users(id)"
+	            + ")");
 
-			stmt.execute("CREATE INDEX IF NOT EXISTS idx_todos_user_date ON todos(user_id, todo_date)");
-			stmt.execute("CREATE INDEX IF NOT EXISTS idx_todos_parent_seq ON todos(parent_id, seq)");
+	        // ③ todos 테이블 생성 (이미 코드에 있음, start_date, end_date 포함)
+	        stmt.execute("CREATE TABLE IF NOT EXISTS todos ("
+	            + " id INTEGER PRIMARY KEY AUTOINCREMENT,"
+	            + " user_id INTEGER NOT NULL,"
+	            + " parent_id INTEGER,"
+	            + " depth INTEGER DEFAULT 0,"
+	            + " title TEXT NOT NULL,"
+	            + " note TEXT,"
+	            + " start_date TEXT NOT NULL,"   // <-- 시작일
+	            + " end_date TEXT NOT NULL,"     // <-- 마감일
+	            + " completed INTEGER DEFAULT 0,"
+	            + " seq INTEGER NOT NULL DEFAULT 0,"
+	            + " created_at TEXT DEFAULT (datetime('now','localtime')),"
+	            + " updated_at TEXT DEFAULT (datetime('now','localtime')),"
+	            + " FOREIGN KEY(user_id)  REFERENCES users(id),"
+	            + " FOREIGN KEY(parent_id) REFERENCES todos(id)"
+	            + ")");
 
-		}
+	        stmt.execute("CREATE INDEX IF NOT EXISTS idx_todos_user_date ON todos(user_id, start_date, end_date)");
+	        stmt.execute("CREATE INDEX IF NOT EXISTS idx_todos_parent_seq ON todos(parent_id, seq)");
+	    }
 	}
 
 	public static Connection getConnection() throws SQLException {
