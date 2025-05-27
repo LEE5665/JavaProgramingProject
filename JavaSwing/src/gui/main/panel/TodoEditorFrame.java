@@ -59,7 +59,7 @@ public class TodoEditorFrame extends JDialog {
         btnPanel.setOpaque(false);
 
         JButton saveBtn = new JButton("저장");
-        saveBtn.setFont(new Font("Dialog", Font.BOLD, 14));
+        saveBtn.setFont(new Font("Dialog", Font.PLAIN, 13));
         saveBtn.addActionListener(e -> doSave(onSave));
 
         JButton cancelBtn = new JButton("취소");

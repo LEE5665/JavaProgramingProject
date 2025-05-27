@@ -14,7 +14,7 @@ import javax.swing.JPasswordField;
 import javax.swing.JTextField;
 import javax.swing.SwingUtilities;
 
-import api.DB;
+import api.model.UserDAO;
 import gui.loginlogout.LoginLogoutFrame;
 import net.miginfocom.swing.MigLayout;
 
@@ -44,7 +44,7 @@ public class RegisterPanel extends JPanel {
 				JOptionPane.showMessageDialog(this, "아이디와 비밀번호를 모두 입력하세요.", "경고", JOptionPane.WARNING_MESSAGE);
 				return;
 			}
-			boolean success = DB.registerUser(username, password);
+			boolean success = UserDAO.registerUser(username, password);
 			if (success) {
 				JOptionPane.showMessageDialog(this, "등록 성공! 로그인 페이지로 이동합니다.", "성공", JOptionPane.INFORMATION_MESSAGE);
 				parentFrame.setContentPane(new LoginPanel(parentFrame));

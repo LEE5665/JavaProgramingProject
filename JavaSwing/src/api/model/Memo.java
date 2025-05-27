@@ -1,72 +1,45 @@
 package api.model;
 
-import java.time.LocalDateTime;
-
 public class Memo {
-	public int id;
-	public int userId;
-	public String content;
-	public boolean fixFlag;
-	public int orderIndex;
-	public LocalDateTime updateAt;
-	public LocalDateTime createdAt;
+    private int id;
+    private int userId;
+    private String content;
+    private boolean fixFlag;
+    private int seq;
+    private String updateAt;
+    private String createdAt;
 
-	public Memo(int id, int userId, String content, boolean fixFlag, int orderIndex, LocalDateTime updateAt,
-			LocalDateTime createdAt) {
-		this.id = id;
-		this.userId = userId;
-		this.content = content;
-		this.fixFlag = fixFlag;
-		this.orderIndex = orderIndex;
-		this.updateAt = updateAt;
-		this.createdAt = createdAt;
-	}
+    public Memo() {}
 
-	public int getId() {
-		return id;
-	}
+    public Memo(int id, int userId, String content, boolean fixFlag, int seq, String updateAt, String createdAt) {
+        this.id = id;
+        this.userId = userId;
+        this.content = content;
+        this.fixFlag = fixFlag;
+        this.seq = seq;
+        this.updateAt = updateAt;
+        this.createdAt = createdAt;
+    }
 
-	public int getUserId() {
-		return userId;
-	}
+    
+    public int getId() { return id; }
+    public void setId(int id) { this.id = id; }
 
-	public String getContent() {
-		return content;
-	}
+    public int getUserId() { return userId; }
+    public void setUserId(int userId) { this.userId = userId; }
 
-	public boolean isFixFlag() {
-		return fixFlag;
-	}
+    public String getContent() { return content; }
+    public void setContent(String content) { this.content = content; }
 
-	public int getOrderIndex() {
-		return orderIndex;
-	}
+    public boolean isFixFlag() { return fixFlag; }
+    public void setFixFlag(boolean fixFlag) { this.fixFlag = fixFlag; }
 
-	public LocalDateTime getUpdateAt() {
-		return updateAt;
-	}
+    public int getSeq() { return seq; }
+    public void setSeq(int seq) { this.seq = seq; }
 
-	public LocalDateTime getCreatedAt() {
-		return createdAt;
-	}
+    public String getUpdateAt() { return updateAt; }
+    public void setUpdateAt(String updateAt) { this.updateAt = updateAt; }
 
-	public void setContent(String content) {
-		this.content = content;
-	}
-
-	public void setFixFlag(boolean fixFlag) {
-		this.fixFlag = fixFlag;
-	}
-
-	public void setOrderIndex(int orderIndex) {
-		this.orderIndex = orderIndex;
-	}
-
-	public void setUpdateAt(LocalDateTime updateAt) {
-		this.updateAt = updateAt;
-	}
-
-	public void setCreatedAt(LocalDateTime createdAt) {
-		this.createdAt = createdAt;
-	}
+    public String getCreatedAt() { return createdAt; }
+    public void setCreatedAt(String createdAt) { this.createdAt = createdAt; }
 }

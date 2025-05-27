@@ -5,14 +5,16 @@ import java.util.List;
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 
-import api.DB;
 import api.model.Memo;
+import api.model.MemoDAO;
 import gui.main.MemoEditorFrame;
 
 public class MemoPanel extends JPanel {
     private JPanel listPanel;
     private JScrollPane scrollPane;
     private int userId;
+
+    private final MemoDAO memoDAO = new MemoDAO();
 
     public MemoPanel(int userId) {
         this.userId = userId;
@@ -46,7 +48,19 @@ public class MemoPanel extends JPanel {
             "메모 추가", "",
             content -> {
                 if (content != null && !content.isBlank()) {
-                    int id = DB.insertMemo(userId, content, listPanel.getComponentCount() + 1);
+                    Memo memo = new Memo();
+                    memo.setUserId(userId);
+                    memo.setContent(content);
+                    memo.setSeq(listPanel.getComponentCount() + 1);
+                    memo.setFixFlag(false);
+                    memo.setUpdateAt(null); 
+                    memo.setCreatedAt(null);
+                    int id = -1;
+                    try {
+                        id = memoDAO.insertMemo(memo);
+                    } catch (Exception ex) {
+                        ex.printStackTrace();
+                    }
                     if (id > 0) reloadSingleMemoWithAnimation(id);
                     else reloadMemos();
                 }
@@ -57,29 +71,54 @@ public class MemoPanel extends JPanel {
 
     private void reloadMemos() {
         listPanel.removeAll();
-        List<Memo> memos = DB.loadMemo(userId);
-        for (int i = 0; i < memos.size(); i++) {
-            Memo memo = memos.get(i);
+        List<Memo> memos = null;
+        try {
+            memos = memoDAO.selectMemosByUser(userId);
+        } catch (Exception ex) {
+            ex.printStackTrace();
+            memos = List.of();
+        }
+        for (Memo memo : memos) {
             MemoCardPanel[] cardRef = new MemoCardPanel[1];
             cardRef[0] = new MemoCardPanel(
                 memo,
-                () -> cardRef[0].playDeleteAnimation(() -> {
-                    DB.deleteMemo(memo.getId());
-                    reloadMemos();
-                }),
+                () -> {
+                    try {
+                        cardRef[0].playDeleteAnimation(() -> {
+                            try {
+                                memoDAO.deleteMemo(memo.getId());
+                                reloadMemos();
+                            } catch (Exception ex) {
+                                ex.printStackTrace();
+                            }
+                        });
+                    } catch (Exception ex) {
+                        ex.printStackTrace();
+                    }
+                },
                 () -> {
                     new MemoEditorFrame(
                         SwingUtilities.getWindowAncestor(this), "메모 수정",
                         memo.getContent(),
                         updated -> {
-                            DB.updateMemoContent(memo.getId(), updated);
-                            reloadMemos();
+                            try {
+                                memo.setContent(updated);
+                                memoDAO.updateMemo(memo);
+                                reloadMemos();
+                            } catch (Exception ex) {
+                                ex.printStackTrace();
+                            }
                         }
                     ).setVisible(true);
                 },
                 () -> {
-                    DB.toggleFixFlag(memo.getId(), !memo.isFixFlag());
-                    reloadMemos();
+                    try {
+                        memo.setFixFlag(!memo.isFixFlag());
+                        memoDAO.updateMemo(memo);
+                        reloadMemos();
+                    } catch (Exception ex) {
+                        ex.printStackTrace();
+                    }
                 }
             );
             listPanel.add(cardRef[0]);
@@ -101,6 +140,7 @@ public class MemoPanel extends JPanel {
         });
     }
 
+    
     public static class WrapLayout extends FlowLayout {
         public WrapLayout(int align, int hgap, int vgap) { super(align, hgap, vgap); }
         @Override public Dimension preferredLayoutSize(Container target) { return layoutSize(target, true); }

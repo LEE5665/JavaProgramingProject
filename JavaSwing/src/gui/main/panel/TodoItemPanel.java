@@ -2,11 +2,13 @@ package gui.main.panel;
 
 import javax.swing.*;
 import java.awt.*;
+import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 import api.model.Todo;
 import api.model.CheckItem;
 import api.model.CheckItemDAO;
+import api.model.TodoDAO; 
 
 public class TodoItemPanel extends JPanel {
     private final Todo todo;
@@ -23,7 +25,6 @@ public class TodoItemPanel extends JPanel {
         setLayout(new BorderLayout());
         setOpaque(false);
 
-        
         JPanel cardPanel = new JPanel(new BorderLayout(8, 8));
         cardPanel.setOpaque(false);
         cardPanel.setBorder(BorderFactory.createCompoundBorder(
@@ -31,18 +32,16 @@ public class TodoItemPanel extends JPanel {
             BorderFactory.createEmptyBorder(18, 20, 18, 20)
         ));
 
-        
         JPanel topPanel = new JPanel(new BorderLayout());
         topPanel.setOpaque(false);
 
-        
         JLabel titleLabel = new JLabel(todo.getTitle());
         titleLabel.setFont(new Font("Dialog", Font.BOLD, 15));
         titleLabel.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 10));
 
         String periodText = String.format("%s ~ %s",
-            todo.getStartDate().format(DATE_FORMAT),
-            todo.getEndDate().format(DATE_FORMAT));
+        LocalDate.parse(todo.getStartDate()).format(DATE_FORMAT),
+        	  LocalDate.parse(todo.getEndDate()).format(DATE_FORMAT));
         JLabel periodLabel = new JLabel(periodText);
         periodLabel.setFont(new Font("Dialog", Font.PLAIN, 11));
         periodLabel.setForeground(Color.GRAY);
@@ -54,39 +53,26 @@ public class TodoItemPanel extends JPanel {
 
         topPanel.add(titlePeriodPanel, BorderLayout.WEST);
 
-        
         JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 5, 0));
         buttonPanel.setOpaque(false);
 
         JButton planEditBtn = new JButton("계획 수정");
         planEditBtn.setFont(new Font("Dialog", Font.PLAIN, 12));
         planEditBtn.setFocusable(false);
-        planEditBtn.addActionListener(e -> {
-            
-        	TodoEditorFrame editor = new TodoEditorFrame(
-        		    SwingUtilities.getWindowAncestor(this),
-        		    "계획 수정",
-        		    todo.getTitle(),
-        		    todo.getStartDate(),
-        		    todo.getEndDate(),
-        		    (title, start, end) -> {
-        		        todo.setTitle(title);
-        		        todo.setStartDate(start);
-        		        todo.setEndDate(end);
-        		        api.model.TodoDAO.update(todo);
-        		        if (onTodoChanged != null) onTodoChanged.run();
-        		    }
-        		);
-        		editor.setVisible(true);
-        });
+        planEditBtn.addActionListener(e -> onEdit.run());
 
         JButton planDeleteBtn = new JButton("계획 삭제");
         planDeleteBtn.setFont(new Font("Dialog", Font.PLAIN, 12));
         planDeleteBtn.setFocusable(false);
         planDeleteBtn.addActionListener(e -> {
-            if (JOptionPane.showConfirmDialog(this, "이 계획을 삭제할까요?", "확인", JOptionPane.YES_NO_OPTION) == JOptionPane.YES_OPTION) {
-                api.model.TodoDAO.delete(todo.getId());
-                if (onTodoChanged != null) onTodoChanged.run();
+            int confirm = JOptionPane.showConfirmDialog(
+                this,
+                "이 계획을 삭제할까요?",
+                "계획 삭제 확인",
+                JOptionPane.YES_NO_OPTION
+            );
+            if (confirm == JOptionPane.YES_OPTION) {
+                onDelete.run();
             }
         });
 
@@ -97,13 +83,11 @@ public class TodoItemPanel extends JPanel {
 
         cardPanel.add(topPanel, BorderLayout.NORTH);
 
-        
         checkListPanel = new JPanel();
         checkListPanel.setLayout(new BoxLayout(checkListPanel, BoxLayout.Y_AXIS));
         checkListPanel.setOpaque(false);
         cardPanel.add(checkListPanel, BorderLayout.CENTER);
 
-        
         JButton addCheckBtn = new JButton("+ 체크박스 추가");
         JButton addTextBtn = new JButton("+ 텍스트 추가");
         addCheckBtn.setFont(new Font("Dialog", Font.PLAIN, 13));
@@ -122,7 +106,6 @@ public class TodoItemPanel extends JPanel {
         reloadCheckList();
     }
 
-    
     private void reloadCheckList() {
         checkListPanel.removeAll();
         List<CheckItem> items = CheckItemDAO.listByTodo(todo.getId());
@@ -160,7 +143,6 @@ public class TodoItemPanel extends JPanel {
                 line.add(label);
             }
 
-            
             JButton editBtn = new JButton("수정");
             editBtn.setFont(new Font("Dialog", Font.PLAIN, 11));
             editBtn.setFocusable(false);

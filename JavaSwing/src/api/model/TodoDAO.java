@@ -1,117 +1,187 @@
 package api.model;
 
+import api.DB;
 import java.sql.*;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
-import api.DB;
 
 public class TodoDAO {
-    public static List<Todo> listAll(int userId) {
-        String sql = "SELECT * FROM todos WHERE user_id=? ORDER BY start_date, end_date, seq";
-        List<Todo> list = new ArrayList<>();
-        try (Connection c = DB.getConnection(); PreparedStatement p = c.prepareStatement(sql)) {
-            p.setInt(1, userId);
-            try (ResultSet r = p.executeQuery()) {
-                while (r.next())
-                    list.add(map(r));
-            }
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-        return list;
-    }
-
-    public static List<Todo> listByDate(int userId, LocalDate date) {
-        List<Todo> list = new ArrayList<>();
-        String sql = "SELECT * FROM todos WHERE user_id=? AND start_date<=? AND end_date>=? ORDER BY start_date, end_date, id";
-        try (Connection c = DB.getConnection(); PreparedStatement p = c.prepareStatement(sql)) {
-            p.setInt(1, userId);
-            p.setString(2, date.toString());
-            p.setString(3, date.toString());
-            try (ResultSet r = p.executeQuery()) {
-                while (r.next()) list.add(map(r));
-            }
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-        return list;
-    }
-
-    public static Todo insert(Todo t) {
-        String sql = "INSERT INTO todos (user_id, parent_id, depth, title, start_date, end_date, completed, seq) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
-        try (Connection c = DB.getConnection();
-             PreparedStatement p = c.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
-            p.setInt(1, t.getUserId());
-            if (t.getParentId() == null)
-                p.setNull(2, Types.INTEGER);
-            else
-                p.setInt(2, t.getParentId());
-            p.setInt(3, t.getDepth());
-            p.setString(4, t.getTitle());
-            p.setString(5, t.getStartDate().toString());
-            p.setString(6, t.getEndDate().toString());
-            p.setInt(7, t.isCompleted() ? 1 : 0);
-            p.setInt(8, 0);
-            p.executeUpdate();
-            try (ResultSet r = p.getGeneratedKeys()) {
-                if (r.next())
-                    t.setId(r.getInt(1));
-            }
-            t.setSeq(0);
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-        return t;
-    }
-
-    public static void update(Todo t) {
-        String sql = "UPDATE todos SET title=?, start_date=?, end_date=?, completed=?, updated_at=CURRENT_TIMESTAMP WHERE id=?";
-        try (Connection c = DB.getConnection(); PreparedStatement p = c.prepareStatement(sql)) {
-            p.setString(1, t.getTitle());
-            p.setString(2, t.getStartDate().toString());
-            p.setString(3, t.getEndDate().toString());
-            p.setInt(4, t.isCompleted() ? 1 : 0);
-            p.setInt(5, t.getId());
-            p.executeUpdate();
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-    }
-
-    public static void toggleCompleted(int id, boolean c) {
-        String sql = "UPDATE todos SET completed=?, updated_at=CURRENT_TIMESTAMP WHERE id=?";
-        try (Connection conn = DB.getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
-            ps.setInt(1, c ? 1 : 0);
-            ps.setInt(2, id);
+    
+    public int insertTodo(Todo todo) throws SQLException {
+        String sql = "INSERT INTO todo (user_id, title, start_date, end_date, completed, seq, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
+        try (Connection conn = DB.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
+            ps.setInt(1, todo.getUserId());
+            ps.setString(2, todo.getTitle());
+            ps.setString(3, todo.getStartDate());
+            ps.setString(4, todo.getEndDate());
+            ps.setInt(5, todo.getCompleted());
+            ps.setInt(6, todo.getSeq());
+            ps.setString(7, todo.getCreatedAt());
+            ps.setString(8, todo.getUpdatedAt());
             ps.executeUpdate();
-        } catch (SQLException e) {
-            e.printStackTrace();
+            try (ResultSet rs = ps.getGeneratedKeys()) {
+                if (rs.next()) return rs.getInt(1);
+            }
+        }
+        return -1;
+    }
+
+    
+    public List<Todo> selectTodosByUser(int userId) throws SQLException {
+        String sql = "SELECT * FROM todo WHERE user_id=? ORDER BY start_date, seq, id";
+        List<Todo> result = new ArrayList<>();
+        try (Connection conn = DB.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, userId);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    Todo todo = new Todo(
+                        rs.getInt("id"),
+                        rs.getInt("user_id"),
+                        rs.getString("title"),
+                        rs.getString("start_date"),
+                        rs.getString("end_date"),
+                        rs.getInt("completed"),
+                        rs.getInt("seq"),
+                        rs.getString("created_at"),
+                        rs.getString("updated_at")
+                    );
+                    result.add(todo);
+                }
+            }
+        }
+        return result;
+    }
+
+    
+    public List<Todo> listByDate(int userId, LocalDate date) throws SQLException {
+        String sql = "SELECT * FROM todo WHERE user_id=? AND start_date<=? AND end_date>=? ORDER BY start_date, seq, id";
+        List<Todo> result = new ArrayList<>();
+        String dateStr = date.toString();
+        try (Connection conn = DB.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, userId);
+            ps.setString(2, dateStr);
+            ps.setString(3, dateStr);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    Todo todo = new Todo(
+                        rs.getInt("id"),
+                        rs.getInt("user_id"),
+                        rs.getString("title"),
+                        rs.getString("start_date"),
+                        rs.getString("end_date"),
+                        rs.getInt("completed"),
+                        rs.getInt("seq"),
+                        rs.getString("created_at"),
+                        rs.getString("updated_at")
+                    );
+                    result.add(todo);
+                }
+            }
+        }
+        return result;
+    }
+
+    
+    public List<Todo> listAll(int userId) throws SQLException {
+        String sql = "SELECT * FROM todo WHERE user_id=? ORDER BY start_date, seq, id";
+        List<Todo> result = new ArrayList<>();
+        try (Connection conn = DB.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, userId);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    Todo todo = new Todo(
+                        rs.getInt("id"),
+                        rs.getInt("user_id"),
+                        rs.getString("title"),
+                        rs.getString("start_date"),
+                        rs.getString("end_date"),
+                        rs.getInt("completed"),
+                        rs.getInt("seq"),
+                        rs.getString("created_at"),
+                        rs.getString("updated_at")
+                    );
+                    result.add(todo);
+                }
+            }
+        }
+        return result;
+    }
+
+    
+    public Todo selectTodoById(int todoId) throws SQLException {
+        String sql = "SELECT * FROM todo WHERE id=?";
+        try (Connection conn = DB.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, todoId);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    return new Todo(
+                        rs.getInt("id"),
+                        rs.getInt("user_id"),
+                        rs.getString("title"),
+                        rs.getString("start_date"),
+                        rs.getString("end_date"),
+                        rs.getInt("completed"),
+                        rs.getInt("seq"),
+                        rs.getString("created_at"),
+                        rs.getString("updated_at")
+                    );
+                }
+            }
+        }
+        return null;
+    }
+
+    
+    public boolean updateTodo(Todo todo) throws SQLException {
+        String sql = "UPDATE todo SET title=?, start_date=?, end_date=?, completed=?, seq=?, updated_at=? WHERE id=?";
+        try (Connection conn = DB.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setString(1, todo.getTitle());
+            ps.setString(2, todo.getStartDate());
+            ps.setString(3, todo.getEndDate());
+            ps.setInt(4, todo.getCompleted());
+            ps.setInt(5, todo.getSeq());
+            ps.setString(6, todo.getUpdatedAt());
+            ps.setInt(7, todo.getId());
+            return ps.executeUpdate() > 0;
         }
     }
 
-    public static void delete(int id) {
-        String sql = "DELETE FROM todos WHERE id=? OR parent_id=?";
-        try (Connection c = DB.getConnection(); PreparedStatement p = c.prepareStatement(sql)) {
-            p.setInt(1, id);
-            p.setInt(2, id);
-            p.executeUpdate();
-        } catch (SQLException e) {
-            e.printStackTrace();
+    
+    public boolean deleteTodo(int todoId) throws SQLException {
+        String sql = "DELETE FROM todo WHERE id=?";
+        try (Connection conn = DB.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, todoId);
+            return ps.executeUpdate() > 0;
         }
     }
 
-    private static Todo map(ResultSet r) throws SQLException {
-        return new Todo(
-            r.getInt("id"),
-            r.getInt("user_id"),
-            r.getObject("parent_id") == null ? null : r.getInt("parent_id"),
-            r.getInt("depth"),
-            r.getString("title"),
-            LocalDate.parse(r.getString("start_date")),
-            LocalDate.parse(r.getString("end_date")),
-            r.getInt("completed") == 1,
-            r.getInt("seq")
-        );
+    
+    public boolean toggleCompleted(int todoId, boolean completed) throws SQLException {
+        String sql = "UPDATE todo SET completed=? WHERE id=?";
+        try (Connection conn = DB.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, completed ? 1 : 0);
+            ps.setInt(2, todoId);
+            return ps.executeUpdate() > 0;
+        }
+    }
+
+    
+    public boolean updateTodoSeq(int todoId, int seq) throws SQLException {
+        String sql = "UPDATE todo SET seq=? WHERE id=?";
+        try (Connection conn = DB.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, seq);
+            ps.setInt(2, todoId);
+            return ps.executeUpdate() > 0;
+        }
     }
 }

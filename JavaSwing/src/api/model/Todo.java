@@ -5,48 +5,61 @@ import java.time.LocalDate;
 public class Todo {
     private int id;
     private int userId;
-    private Integer parentId;
-    private int depth;
     private String title;
-    private LocalDate startDate;
-    private LocalDate endDate;
-    private boolean completed;
+    private String startDate;
+    private String endDate;
+    private int completed;
     private int seq;
+    private String createdAt;
+    private String updatedAt;
 
-    
-    public Todo(int id, int userId, Integer parentId, int depth, String title,
-                LocalDate startDate, LocalDate endDate, boolean completed, int seq) {
+    public Todo() {}
+
+    public Todo(int id, int userId, String title, String startDate, String endDate,
+                int completed, int seq, String createdAt, String updatedAt) {
         this.id = id;
         this.userId = userId;
-        this.parentId = parentId;
-        this.depth = depth;
         this.title = title;
         this.startDate = startDate;
         this.endDate = endDate;
         this.completed = completed;
         this.seq = seq;
+        this.createdAt = createdAt;
+        this.updatedAt = updatedAt;
     }
-
     
-    public Todo(int userId, Integer parentId, int depth, String title,
-                LocalDate startDate, LocalDate endDate) {
-        this(0, userId, parentId, depth, title, startDate, endDate, false, 0);
+    public void setStartDate(LocalDate date) {
+        this.startDate = date.toString();
+    }
+    public void setEndDate(LocalDate date) {
+        this.endDate = date.toString();
     }
 
     
     public int getId() { return id; }
     public void setId(int id) { this.id = id; }
+
     public int getUserId() { return userId; }
-    public Integer getParentId() { return parentId; }
-    public int getDepth() { return depth; }
+    public void setUserId(int userId) { this.userId = userId; }
+
     public String getTitle() { return title; }
     public void setTitle(String title) { this.title = title; }
-    public LocalDate getStartDate() { return startDate; }
-    public void setStartDate(LocalDate startDate) { this.startDate = startDate; }
-    public LocalDate getEndDate() { return endDate; }
-    public void setEndDate(LocalDate endDate) { this.endDate = endDate; }
-    public boolean isCompleted() { return completed; }
-    public void setCompleted(boolean completed) { this.completed = completed; }
+
+    public String getStartDate() { return startDate; }
+    public void setStartDate(String startDate) { this.startDate = startDate; }
+
+    public String getEndDate() { return endDate; }
+    public void setEndDate(String endDate) { this.endDate = endDate; }
+
+    public int getCompleted() { return completed; }
+    public void setCompleted(int completed) { this.completed = completed; }
+
     public int getSeq() { return seq; }
     public void setSeq(int seq) { this.seq = seq; }
+
+    public String getCreatedAt() { return createdAt; }
+    public void setCreatedAt(String createdAt) { this.createdAt = createdAt; }
+
+    public String getUpdatedAt() { return updatedAt; }
+    public void setUpdatedAt(String updatedAt) { this.updatedAt = updatedAt; }
 }

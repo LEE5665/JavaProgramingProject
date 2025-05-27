@@ -18,7 +18,7 @@ import javax.swing.SwingUtilities;
 import javax.swing.UIManager;
 import javax.swing.UnsupportedLookAndFeelException;
 
-import api.DB;
+import api.model.UserDAO;
 import gui.loginlogout.LoginLogoutFrame;
 import gui.main.MainFrame;
 import net.miginfocom.swing.MigLayout;
@@ -55,7 +55,7 @@ public class LoginPanel extends JPanel {
 		Runnable doLogin = () -> {
 			String username = txtUser.getText().trim();
 			String password = new String(txtPass.getPassword());
-			int userId = DB.login(username, password);
+			int userId = UserDAO.login(username, password);
 			if (userId > 0) {
 				PREFS.putBoolean("rememberMe", rememberMe.isSelected());
 				if (rememberMe.isSelected()) {
