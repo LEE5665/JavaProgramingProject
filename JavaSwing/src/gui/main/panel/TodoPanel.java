@@ -46,7 +46,7 @@ public class TodoPanel extends JPanel {
         
         JPanel datePanel = new JPanel(new MigLayout(
                 "insets 0, wrap 2",         
-                "[30!]8[grow,fill]8[30!]",  
+                "[30!]2[grow,fill]8[30!]",  
                 "[]4[]"));
         btnPrevDay = new JButton("<");
         dateInputField = new JTextField(DATE_FORMAT.format(LocalDate.now()), 10);

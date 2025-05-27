@@ -30,9 +30,11 @@ public class RegisterPanel extends JPanel {
 
 		JLabel lblId = new JLabel("아이디");
 		JTextField txtId = new JTextField();
+		txtId.putClientProperty("JTextField.placeholderText", "아이디 입력");
 
 		JLabel lblPw = new JLabel("비밀번호");
 		JPasswordField txtPw = new JPasswordField();
+		txtPw.putClientProperty("JTextField.placeholderText", "비밀번호 입력");
 
 		JButton btnRegister = new JButton("등록");
 		Runnable doRegister = () -> {
