@@ -95,7 +95,7 @@ public class LoginPanel extends JPanel {
 		signupText.addMouseListener(new java.awt.event.MouseAdapter() {
 			@Override
 			public void mouseClicked(java.awt.event.MouseEvent e) {
-				parentFrame.setContentPane(new RegisterPanel(parentFrame));
+				parentFrame.setMainContentPanel(new RegisterPanel(parentFrame));
 				parentFrame.revalidate();
 			}
 		});

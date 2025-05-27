@@ -80,7 +80,7 @@ public class RegisterPanel extends JPanel {
 		backText.addMouseListener(new java.awt.event.MouseAdapter() {
 			@Override
 			public void mouseClicked(java.awt.event.MouseEvent e) {
-				parentFrame.setContentPane(new LoginPanel(parentFrame));
+				parentFrame.setMainContentPanel(new LoginPanel(parentFrame));
 				parentFrame.revalidate();
 			}
 		});
