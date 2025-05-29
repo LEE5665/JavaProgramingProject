@@ -32,19 +32,18 @@ public class TodoItemPanel extends JPanel {
             BorderFactory.createEmptyBorder(18, 20, 18, 20)
         ));
 
-        Font base = UIManager.getFont("ToggleButton.font");
         JPanel topPanel = new JPanel(new BorderLayout());
         topPanel.setOpaque(false);
 
         JLabel titleLabel = new JLabel(todo.getTitle());
-        titleLabel.setFont(base.deriveFont(Font.BOLD, 15));
+        titleLabel.setFont(new Font("Dialog", Font.BOLD, 15));
         titleLabel.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 10));
 
         String periodText = String.format("%s ~ %s",
         LocalDate.parse(todo.getStartDate()).format(DATE_FORMAT),
         	  LocalDate.parse(todo.getEndDate()).format(DATE_FORMAT));
         JLabel periodLabel = new JLabel(periodText);
-        periodLabel.setFont(base.deriveFont(Font.PLAIN, 11));
+        periodLabel.setFont(new Font("Dialog", Font.PLAIN, 11));
         periodLabel.setForeground(Color.GRAY);
 
         JPanel titlePeriodPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 5, 0));
@@ -58,12 +57,12 @@ public class TodoItemPanel extends JPanel {
         buttonPanel.setOpaque(false);
 
         JButton planEditBtn = new JButton("계획 수정");
-        planEditBtn.setFont(base.deriveFont(Font.PLAIN, 12));
+        planEditBtn.setFont(new Font("Dialog", Font.PLAIN, 12));
         planEditBtn.setFocusable(false);
         planEditBtn.addActionListener(e -> onEdit.run());
 
         JButton planDeleteBtn = new JButton("계획 삭제");
-        planDeleteBtn.setFont(base.deriveFont(Font.PLAIN, 12));
+        planDeleteBtn.setFont(new Font("Dialog", Font.PLAIN, 12));
         planDeleteBtn.setFocusable(false);
         planDeleteBtn.addActionListener(e -> {
             int confirm = JOptionPane.showConfirmDialog(
@@ -91,8 +90,8 @@ public class TodoItemPanel extends JPanel {
 
         JButton addCheckBtn = new JButton("+ 체크박스 추가");
         JButton addTextBtn = new JButton("+ 텍스트 추가");
-        addCheckBtn.setFont(base.deriveFont(Font.PLAIN, 13));
-        addTextBtn.setFont(base.deriveFont(Font.PLAIN, 13));
+        addCheckBtn.setFont(new Font("Dialog", Font.PLAIN, 13));
+        addTextBtn.setFont(new Font("Dialog", Font.PLAIN, 13));
         addCheckBtn.addActionListener(e -> onAddItem("checkbox"));
         addTextBtn.addActionListener(e -> onAddItem("text"));
 
@@ -110,7 +109,6 @@ public class TodoItemPanel extends JPanel {
     private void reloadCheckList() {
         checkListPanel.removeAll();
         List<CheckItem> items = CheckItemDAO.listByTodo(todo.getId());
-         Font base = UIManager.getFont("ToggleButton.font");
 
         if (items == null || items.isEmpty()) {
             checkListPanel.add(new JLabel("항목이 없습니다."));
@@ -130,7 +128,7 @@ public class TodoItemPanel extends JPanel {
 
             if ("checkbox".equals(item.getType())) {
                 JCheckBox cb = new JCheckBox(item.getContent(), item.isChecked());
-                cb.setFont(base.deriveFont(Font.PLAIN, 13));
+                cb.setFont(new Font("Dialog", Font.PLAIN, 13));
                 cb.setOpaque(false);
                 cb.setAlignmentY(Component.CENTER_ALIGNMENT);
                 cb.addActionListener(e -> {
@@ -140,13 +138,13 @@ public class TodoItemPanel extends JPanel {
                 line.add(cb);
             } else {
                 JLabel label = new JLabel(item.getContent());
-                label.setFont(base.deriveFont(Font.PLAIN, 13));
+                label.setFont(new Font("Dialog", Font.PLAIN, 13));
                 label.setAlignmentY(Component.CENTER_ALIGNMENT);
                 line.add(label);
             }
 
             JButton editBtn = new JButton("수정");
-            editBtn.setFont(base.deriveFont(Font.PLAIN, 11));
+            editBtn.setFont(new Font("Dialog", Font.PLAIN, 11));
             editBtn.setFocusable(false);
             editBtn.setMargin(new Insets(2, 6, 2, 6));
             editBtn.setToolTipText("수정");
@@ -161,7 +159,7 @@ public class TodoItemPanel extends JPanel {
             });
 
             JButton delBtn = new JButton("삭제");
-            delBtn.setFont(base.deriveFont(Font.PLAIN, 11));
+            delBtn.setFont(new Font("Dialog", Font.PLAIN, 11));
             delBtn.setFocusable(false);
             delBtn.setMargin(new Insets(2, 6, 2, 6));
             delBtn.setToolTipText("삭제");
@@ -174,7 +172,7 @@ public class TodoItemPanel extends JPanel {
             });
 
             JButton upBtn = new JButton("↑");
-            upBtn.setFont(base.deriveFont(Font.PLAIN, 11));
+            upBtn.setFont(new Font("Dialog", Font.PLAIN, 11));
             upBtn.setFocusable(false);
             upBtn.setMargin(new Insets(2, 6, 2, 6));
             upBtn.setEnabled(index > 0);
@@ -185,7 +183,7 @@ public class TodoItemPanel extends JPanel {
             });
 
             JButton downBtn = new JButton("↓");
-            downBtn.setFont(base.deriveFont(Font.PLAIN, 11));
+            downBtn.setFont(new Font("Dialog", Font.PLAIN, 11));
             downBtn.setFocusable(false);
             downBtn.setMargin(new Insets(2, 6, 2, 6));
             downBtn.setEnabled(index < items.size() - 1);

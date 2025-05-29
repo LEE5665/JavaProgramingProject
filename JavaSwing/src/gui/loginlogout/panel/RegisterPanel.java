@@ -13,7 +13,6 @@ import javax.swing.JPanel;
 import javax.swing.JPasswordField;
 import javax.swing.JTextField;
 import javax.swing.SwingUtilities;
-import javax.swing.UIManager;
 
 import api.model.UserDAO;
 import gui.loginlogout.LoginLogoutFrame;
@@ -26,8 +25,7 @@ public class RegisterPanel extends JPanel {
 		panel.setBorder(BorderFactory.createEmptyBorder(30, 30, 30, 30));
 
 		JLabel title = new JLabel("사용자 등록");
-		Font base = UIManager.getFont("ToggleButton.font");
-		title.setFont(base.deriveFont(Font.BOLD, 20));
+		title.setFont(new Font("Dialog", Font.BOLD, 20));
 		panel.add(title, "gapbottom 15, center");
 
 		JLabel lblId = new JLabel("아이디");

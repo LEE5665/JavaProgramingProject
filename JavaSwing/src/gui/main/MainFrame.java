@@ -8,6 +8,7 @@ import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.Font;
 import java.awt.event.ItemEvent;
+import java.awt.event.ItemListener;
 import java.util.prefs.Preferences;
 
 import javax.swing.AbstractButton;
@@ -19,22 +20,22 @@ import javax.swing.JPanel;
 import javax.swing.JSeparator;
 import javax.swing.JToggleButton;
 import javax.swing.SwingUtilities;
-import javax.swing.UIDefaults;
 import javax.swing.UIManager;
 import javax.swing.border.EmptyBorder;
-import javax.swing.plaf.FontUIResource;
 
 import gui.main.panel.MemoPanel;
 import gui.main.panel.TodoPanel;
+import jiconfont.icons.font_awesome.FontAwesome;
+import jiconfont.swing.IconFontSwing;
 
 public class MainFrame extends JFrame {
 	private static final Preferences PREFS = Preferences.userRoot().node("MyAppPrefs");
-	private static final String LIGHT = "com.formdev.flatlaf.FlatLightLaf";
-	private static final String DARK = "com.formdev.flatlaf.intellijthemes.FlatHiberbeeDarkIJTheme";
-	private static final Font GLOBAL_FONT = new Font("Nanum Gothic", Font.PLAIN, 14);
+	private final String LIGHT = "com.formdev.flatlaf.FlatLightLaf";
+	private final String DARK = "com.formdev.flatlaf.intellijthemes.FlatHiberbeeDarkIJTheme";
 
 	private int userId;
 	private JToggleButton todoButton, memoButton;
+	private ButtonGroup typeGroup;
 	private JPanel contentPanel;
 	private MemoPanel memoPanel;
 	private TodoPanel todoPanel;
@@ -42,7 +43,6 @@ public class MainFrame extends JFrame {
 	public MainFrame(int userId) {
 		this.userId = userId;
 		applySavedLookAndFeel();
-		applyGlobalFont(GLOBAL_FONT);
 
 		setTitle("일정 관리");
 		setSize(1200, 800);
@@ -54,19 +54,22 @@ public class MainFrame extends JFrame {
 		headerBar.setBackground(UIManager.getColor("Panel.background"));
 
 		JLabel appTitle = new JLabel("일정 관리");
-		appTitle.setFont(GLOBAL_FONT.deriveFont(Font.BOLD, 22f));
+		appTitle.setFont(new Font("Dialog", Font.BOLD, 22));
 		appTitle.setBorder(new EmptyBorder(0, 24, 0, 0));
 		appTitle.setForeground(UIManager.getColor("Label.foreground"));
+
+		int iconSize = 20;
+		boolean dark = PREFS.getBoolean("darkMode", false);
 
 		JToggleButton themeToggle = new JToggleButton();
 		themeToggle.setFocusPainted(false);
 		themeToggle.setBorderPainted(false);
 		themeToggle.setContentAreaFilled(false);
-		themeToggle.setFont(GLOBAL_FONT.deriveFont(22f));
 		themeToggle.setPreferredSize(new Dimension(44, 44));
-		boolean dark = PREFS.getBoolean("darkMode", false);
 		themeToggle.setSelected(dark);
-		themeToggle.setText(dark ? "🌜" : "🌞");
+		themeToggle.setIcon(IconFontSwing.buildIcon(FontAwesome.MOON_O, iconSize, dark ? Color.WHITE : Color.BLACK));
+		themeToggle.setSelectedIcon(
+				IconFontSwing.buildIcon(FontAwesome.SUN_O, iconSize, dark ? Color.WHITE : Color.BLACK));
 		themeToggle.setToolTipText(dark ? "다크 모드" : "라이트 모드");
 		themeToggle.addItemListener(e -> {
 			boolean sel = e.getStateChange() == ItemEvent.SELECTED;
@@ -76,11 +79,19 @@ public class MainFrame extends JFrame {
 			} catch (Exception ex) {
 				ex.printStackTrace();
 			}
-			applyGlobalFont(GLOBAL_FONT);
-			SwingUtilities.updateComponentTreeUI(this);
-
-			themeToggle.setText(sel ? "🌜" : "🌞");
+			themeToggle.setIcon(IconFontSwing.buildIcon(FontAwesome.MOON_O, iconSize, sel ? Color.WHITE : Color.BLACK));
+			themeToggle.setSelectedIcon(
+					IconFontSwing.buildIcon(FontAwesome.SUN_O, iconSize, sel ? Color.WHITE : Color.BLACK));
 			themeToggle.setToolTipText(sel ? "다크 모드" : "라이트 모드");
+			SwingUtilities.updateComponentTreeUI(this);
+			memoPanel.updateUI();
+			todoPanel.updateUI();
+			for (AbstractButton btn : new AbstractButton[] { todoButton, memoButton }) {
+				for (ItemListener il : btn.getItemListeners()) {
+					il.itemStateChanged(new ItemEvent(btn, ItemEvent.ITEM_STATE_CHANGED, btn,
+							btn.isSelected() ? ItemEvent.SELECTED : ItemEvent.DESELECTED));
+				}
+			}
 		});
 
 		JPanel rightPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 4));
@@ -95,7 +106,7 @@ public class MainFrame extends JFrame {
 
 		todoButton = createTypeToggle("To-Do List");
 		memoButton = createTypeToggle("메모장");
-		ButtonGroup typeGroup = new ButtonGroup();
+		typeGroup = new ButtonGroup();
 		typeGroup.add(todoButton);
 		typeGroup.add(memoButton);
 
@@ -109,6 +120,7 @@ public class MainFrame extends JFrame {
 		memoButton.putClientProperty("accent", accent);
 
 		memoButton.setSelected(true);
+
 		todoButton.addActionListener(e -> switchContent("todo"));
 		memoButton.addActionListener(e -> switchContent("memo"));
 
@@ -145,33 +157,10 @@ public class MainFrame extends JFrame {
 		}
 	}
 
-	private static void applyGlobalFont(Font font) {
-		FontUIResource fr = new FontUIResource(font);
-		UIDefaults defaults = UIManager.getDefaults();
-		for (Object key : defaults.keySet()) {
-			Object val = defaults.get(key);
-			if (val instanceof FontUIResource) {
-				UIManager.put(key, fr);
-			}
-		}
-	}
-
-	private void updateUIAll() {
-		SwingUtilities.updateComponentTreeUI(this);
-		memoPanel.updateUI();
-		todoPanel.updateUI();
-		for (AbstractButton btn : new AbstractButton[] { todoButton, memoButton }) {
-			for (java.awt.event.ItemListener il : btn.getItemListeners()) {
-				il.itemStateChanged(new java.awt.event.ItemEvent(btn, ItemEvent.ITEM_STATE_CHANGED, btn,
-						btn.isSelected() ? ItemEvent.SELECTED : ItemEvent.DESELECTED));
-			}
-		}
-	}
-
 	private JToggleButton createTypeToggle(String text) {
 		JToggleButton btn = new JToggleButton(text);
 		btn.setFocusPainted(false);
-		btn.setFont(GLOBAL_FONT.deriveFont(Font.BOLD, 16f));
+		btn.setFont(new Font("Dialog", Font.BOLD, 16));
 		btn.setOpaque(false);
 		btn.setContentAreaFilled(false);
 		btn.setBorder(BorderFactory.createEmptyBorder(7, 30, 7, 30));
@@ -181,7 +170,8 @@ public class MainFrame extends JFrame {
 		btn.addItemListener(e -> {
 			boolean sel = btn.isSelected();
 			Color accent = (Color) btn.getClientProperty("accent");
-			btn.setFont(GLOBAL_FONT.deriveFont(sel ? 18f : 16f));
+			btn.setFont(btn.getFont().deriveFont(sel ? 18f : 16f));
+
 			btn.setForeground(sel ? accent != null ? blend(UIManager.getColor("Label.foreground"), accent, 0.38f)
 					: UIManager.getColor("Label.foreground").darker() : UIManager.getColor("Label.foreground"));
 			btn.setBorder(sel

@@ -16,8 +16,7 @@ public class MemoEditorFrame extends JDialog {
         getContentPane().setBackground(UIManager.getColor("Panel.background"));
 
         textArea = new JTextArea(initialContent == null ? "" : initialContent, 7, 26);
-        Font base = UIManager.getFont("ToggleButton.font");
-        textArea.setFont(base.deriveFont( Font.PLAIN, 15));
+        textArea.setFont(new Font("Malgun Gothic", Font.PLAIN, 15));
         textArea.setLineWrap(true);
         textArea.setWrapStyleWord(true);
         textArea.setBorder(BorderFactory.createCompoundBorder(
@@ -31,12 +30,12 @@ public class MemoEditorFrame extends JDialog {
         btnPanel.setBackground(UIManager.getColor("Panel.background"));
 
         JButton btnSave = new JButton("저장");
-        btnSave.setFont(base.deriveFont( Font.BOLD, 13));
+        btnSave.setFont(new Font("Malgun Gothic", Font.BOLD, 13));
         btnSave.setPreferredSize(new Dimension(80, 32));
         btnSave.addActionListener(e -> doSave(onSave));
 
         JButton btnCancel = new JButton("취소");
-        btnCancel.setFont(base.deriveFont( Font.PLAIN, 13));
+        btnCancel.setFont(new Font("Malgun Gothic", Font.PLAIN, 13));
         btnCancel.setPreferredSize(new Dimension(80, 32));
         btnCancel.addActionListener(e -> {
             dispose();
