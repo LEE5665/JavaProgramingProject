@@ -37,12 +37,13 @@ public class MemoCardPanel extends JPanel {
         setBorder(new EmptyBorder(8, 10, 8, 10));
 
         
+        Font base = UIManager.getFont("ToggleButton.font");
         textArea = new JTextArea(memo.getContent() == null ? "" : memo.getContent());
         textArea.setEditable(false);
         textArea.setOpaque(false); 
         textArea.setLineWrap(true);
         textArea.setWrapStyleWord(true);
-        textArea.setFont(new Font("Malgun Gothic", Font.PLAIN, 12));
+        textArea.setFont(base.deriveFont( Font.PLAIN, 12));
         textArea.setForeground(UIManager.getColor("Label.foreground"));
         textArea.setBorder(null);
         textArea.setFocusable(false);
@@ -72,7 +73,7 @@ public class MemoCardPanel extends JPanel {
         pinBtn.setBorderPainted(false);
         pinBtn.setContentAreaFilled(false);
         pinBtn.setFocusPainted(false);
-        pinBtn.setFont(new Font("Dialog", Font.PLAIN, 13));
+        pinBtn.setFont(base.deriveFont(Font.PLAIN, 13));
         pinBtn.setToolTipText("고정");
         pinBtn.addActionListener(e -> onPin.run());
         buttonPanel.add(pinBtn);
@@ -82,7 +83,7 @@ public class MemoCardPanel extends JPanel {
         editBtn.setBorderPainted(false);
         editBtn.setContentAreaFilled(false);
         editBtn.setFocusPainted(false);
-        editBtn.setFont(new Font("Dialog", Font.PLAIN, 13));
+        editBtn.setFont(base.deriveFont(Font.PLAIN, 13));
         editBtn.setToolTipText("수정");
         editBtn.addActionListener(e -> onEdit.run());
         buttonPanel.add(editBtn);
@@ -92,7 +93,7 @@ public class MemoCardPanel extends JPanel {
         delBtn.setBorderPainted(false);
         delBtn.setContentAreaFilled(false);
         delBtn.setFocusPainted(false);
-        delBtn.setFont(new Font("Dialog", Font.PLAIN, 13));
+        delBtn.setFont(base.deriveFont(Font.PLAIN, 13));
         delBtn.setToolTipText("삭제");
         delBtn.addActionListener(e -> onDelete.run());
         buttonPanel.add(delBtn);

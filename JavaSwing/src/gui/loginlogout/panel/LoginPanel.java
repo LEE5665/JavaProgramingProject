@@ -33,7 +33,8 @@ public class LoginPanel extends JPanel {
 		panel.setBorder(BorderFactory.createEmptyBorder(0, 30, 30, 30));
 
 		JLabel title = new JLabel("일정 관리");
-		title.setFont(new Font("Dialog", Font.BOLD, 20));
+		Font base = UIManager.getFont("ToggleButton.font");
+		title.setFont(base.deriveFont(Font.BOLD, 20));
 		panel.add(title, "gapbottom 5, center");
 
 		JLabel lblUser = new JLabel("아이디");

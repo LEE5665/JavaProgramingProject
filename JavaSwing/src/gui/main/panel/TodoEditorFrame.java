@@ -28,9 +28,10 @@ public class TodoEditorFrame extends JDialog {
         form.setBorder(BorderFactory.createEmptyBorder(16, 24, 16, 24)); 
 
         
+        Font base = UIManager.getFont("ToggleButton.font");
         form.add(new JLabel("제목"));
         titleField = new JTextField(initialTitle == null ? "" : initialTitle, 28);
-        titleField.setFont(new Font("Dialog", Font.BOLD, 15));
+        titleField.setFont(base.deriveFont(Font.BOLD, 15));
         form.add(titleField);
         form.add(Box.createVerticalStrut(12)); 
 
@@ -59,11 +60,11 @@ public class TodoEditorFrame extends JDialog {
         btnPanel.setOpaque(false);
 
         JButton saveBtn = new JButton("저장");
-        saveBtn.setFont(new Font("Dialog", Font.PLAIN, 13));
+        saveBtn.setFont(base.deriveFont(Font.PLAIN, 13));
         saveBtn.addActionListener(e -> doSave(onSave));
 
         JButton cancelBtn = new JButton("취소");
-        cancelBtn.setFont(new Font("Dialog", Font.PLAIN, 13));
+        cancelBtn.setFont(base.deriveFont(Font.PLAIN, 13));
         cancelBtn.addActionListener(e -> dispose());
 
         btnPanel.add(saveBtn);

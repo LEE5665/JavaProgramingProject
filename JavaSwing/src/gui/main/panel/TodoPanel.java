@@ -34,13 +34,14 @@ public class TodoPanel extends JPanel {
         this.userId = userId;
         setLayout(new MigLayout("insets 0, fill", "[240!][grow,fill]", "[grow,fill]"));
 
+        Font base = UIManager.getFont("ToggleButton.font");
         /* ------------------ 왼쪽 패널 ------------------ */
         JPanel leftPanel = new JPanel(new MigLayout(
                 "insets 18 14 18 6, wrap 1",
                 "[grow,fill]", ""));
 
         JLabel dateLabel = new JLabel("날짜 선택");
-        dateLabel.setFont(new Font("Dialog", Font.BOLD, 15));
+        dateLabel.setFont(base.deriveFont(Font.BOLD, 15));
         leftPanel.add(dateLabel, "gapbottom 6");
 
         JPanel datePanel = new JPanel(new MigLayout(
@@ -62,7 +63,7 @@ public class TodoPanel extends JPanel {
         leftPanel.add(new JSeparator(), "growx, gapy 8 8");
 
         JLabel searchLabel = new JLabel("제목 검색");
-        searchLabel.setFont(new Font("Dialog", Font.BOLD, 15));
+        searchLabel.setFont(base.deriveFont(Font.BOLD, 15));
         leftPanel.add(searchLabel, "gapbottom 6");
 
         JPanel searchPanel = new JPanel(new MigLayout("insets 0", "[grow,fill][]", ""));
@@ -75,11 +76,11 @@ public class TodoPanel extends JPanel {
         leftPanel.add(new JSeparator(), "growx, gapy 8 8");
 
         JLabel sortLabel = new JLabel("정렬");
-        sortLabel.setFont(new Font("Dialog", Font.BOLD, 15));
+        sortLabel.setFont(base.deriveFont(Font.BOLD, 15));
         leftPanel.add(sortLabel, "gapbottom 6");
 
         sortCombo = new JComboBox<>(new String[]{"기간 오름차순", "기간 내림차순"});
-        sortCombo.setFont(new Font("Dialog", Font.PLAIN, 13));
+        sortCombo.setFont(base.deriveFont(Font.PLAIN, 13));
         leftPanel.add(sortCombo, "growx");
 
         leftPanel.add(new JLabel(), "grow, pushy");
@@ -88,7 +89,7 @@ public class TodoPanel extends JPanel {
         JPanel rightPanel = new JPanel(new MigLayout("insets 18 4 18 16, wrap 1, fill", "[grow,fill]", "[]8[grow,fill]"));
 
         JButton addBtn = new JButton("+ 계획 추가");
-        addBtn.setFont(new Font("Dialog", Font.BOLD, 14));
+        addBtn.setFont(base.deriveFont(Font.BOLD, 14));
         rightPanel.add(addBtn, "alignx right, gapbottom 8");
 
         todoListPanel = new JPanel(new MigLayout("insets 0, wrap 1, fillx", "[grow,fill]", ""));
