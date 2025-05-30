@@ -1,174 +1,187 @@
 package gui.main.panel;
 
-import java.awt.*;
+import java.awt.BorderLayout;
+import java.awt.Component;
+import java.awt.Container;
+import java.awt.Dimension;
+import java.awt.FlowLayout;
 import java.util.List;
-import javax.swing.*;
-import javax.swing.border.EmptyBorder;
+
+import javax.swing.JButton;
+import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import javax.swing.SwingUtilities;
+import javax.swing.UIManager;
 
 import api.model.Memo;
 import api.model.MemoDAO;
-import gui.main.MemoEditorFrame;
+import gui.main.SwingHtmlEditorWithImage;
 
 public class MemoPanel extends JPanel {
-    private JPanel listPanel;
-    private JScrollPane scrollPane;
-    private int userId;
+	private final MemoDAO memoDAO = new MemoDAO();
+	private final int userId;
+	private final JPanel listPanel;
+	private final JScrollPane scrollPane;
 
-    private final MemoDAO memoDAO = new MemoDAO();
+	public MemoPanel(int userId) {
+		this.userId = userId;
+		setLayout(new BorderLayout());
+		setBackground(UIManager.getColor("Panel.background"));
 
-    public MemoPanel(int userId) {
-        this.userId = userId;
-        setLayout(new BorderLayout());
-        setBackground(UIManager.getColor("Panel.background"));
+		JButton addButton = new JButton("+ 메모 추가");
+		addButton.addActionListener(e -> addMemo());
+		JPanel addPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
+		addPanel.setBackground(getBackground());
+		addPanel.add(addButton);
+		add(addPanel, BorderLayout.NORTH);
 
-        JButton addButton = new JButton("+ 메모 추가");
-        addButton.addActionListener(e -> addMemo());
+		listPanel = new JPanel(new WrapLayout(FlowLayout.LEFT, 16, 16));
+		listPanel.setOpaque(false);
+		scrollPane = new JScrollPane(listPanel);
+		scrollPane.getViewport().setBackground(UIManager.getColor("Viewport.background"));
+		scrollPane.getVerticalScrollBar().setUnitIncrement(20);
+		add(scrollPane, BorderLayout.CENTER);
 
-        JPanel addPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
-        addPanel.setBackground(getBackground());
-        addPanel.add(addButton);
+		reloadMemos();
+	}
 
-        listPanel = new JPanel(new WrapLayout(FlowLayout.LEFT, 16, 16));
-        listPanel.setOpaque(false);
-        listPanel.setBorder(new EmptyBorder(12, 24, 12, 24));
+	private void addMemo() {
+		try {
+			SwingHtmlEditorWithImage dlg = new SwingHtmlEditorWithImage(SwingUtilities.getWindowAncestor(this), "메모 추가",
+					"", html -> {
+						if (html != null && !html.isBlank()) {
+							Memo m = new Memo();
+							m.setUserId(userId);
+							m.setContent(html);
+							m.setSeq(listPanel.getComponentCount() + 1);
+							m.setFixFlag(false);
+							int id = memoDAO.insertMemo(m);
+							if (id > 0)
+								reloadSingleMemoWithAnimation(id);
+							else
+								reloadMemos();
+						}
+					});
+			dlg.setVisible(true);
+		} catch (Exception ex) {
+			ex.printStackTrace();
+		}
+	}
 
-        scrollPane = new JScrollPane(listPanel);
-        scrollPane.getViewport().setBackground(UIManager.getColor("Viewport.background"));
-        scrollPane.getVerticalScrollBar().setUnitIncrement(20);
+	private void editMemo(Memo memo) {
+		try {
+			SwingHtmlEditorWithImage dlg = new SwingHtmlEditorWithImage(SwingUtilities.getWindowAncestor(this), "메모 수정",
+					memo.getContent(), html -> {
+						if (html != null) {
+							memo.setContent(html);
+							try {
+								memoDAO.updateMemo(memo);
+							} catch (Exception ex) {
+								ex.printStackTrace();
+							}
+							reloadMemos();
+						}
+					});
+			dlg.setVisible(true);
+		} catch (Exception ex) {
+			ex.printStackTrace();
+		}
+	}
 
-        add(addPanel, BorderLayout.NORTH);
-        add(scrollPane, BorderLayout.CENTER);
+	private void deleteMemo(Memo memo, MemoCardPanel card) {
+		try {
+			card.playDeleteAnimation(() -> {
+				try {
+					memoDAO.deleteMemo(memo.getId());
+				} catch (Exception ex) {
+					ex.printStackTrace();
+				}
+				reloadMemos();
+			});
+		} catch (Exception ex) {
+			ex.printStackTrace();
+		}
+	}
 
-        reloadMemos();
-    }
+	private void reloadMemos() {
+		listPanel.removeAll();
+		List<Memo> memos;
+		try {
+			memos = memoDAO.selectMemosByUser(userId);
+		} catch (Exception ex) {
+			ex.printStackTrace();
+			memos = List.of();
+		}
+		for (Memo memo : memos) {
+			MemoCardPanel[] ref = new MemoCardPanel[1];
+			ref[0] = new MemoCardPanel(memo, () -> deleteMemo(memo, ref[0]), () -> editMemo(memo), () -> {
+				memo.setFixFlag(!memo.isFixFlag());
+				try {
+					memoDAO.updateMemo(memo);
+				} catch (Exception ex) {
+					ex.printStackTrace();
+				}
+				reloadMemos();
+			});
+			listPanel.add(ref[0]);
+		}
+		listPanel.revalidate();
+		listPanel.repaint();
+	}
 
-    private void addMemo() {
-        MemoEditorFrame editor = new MemoEditorFrame(
-            SwingUtilities.getWindowAncestor(this),
-            "메모 추가", "",
-            content -> {
-                if (content != null && !content.isBlank()) {
-                    Memo memo = new Memo();
-                    memo.setUserId(userId);
-                    memo.setContent(content);
-                    memo.setSeq(listPanel.getComponentCount() + 1);
-                    memo.setFixFlag(false);
-                    memo.setUpdateAt(null); 
-                    memo.setCreatedAt(null);
-                    int id = -1;
-                    try {
-                        id = memoDAO.insertMemo(memo);
-                    } catch (Exception ex) {
-                        ex.printStackTrace();
-                    }
-                    if (id > 0) reloadSingleMemoWithAnimation(id);
-                    else reloadMemos();
-                }
-            }
-        );
-        editor.setVisible(true);
-    }
+	private void reloadSingleMemoWithAnimation(int targetId) {
+		reloadMemos();
+		SwingUtilities.invokeLater(() -> {
+			for (Component c : listPanel.getComponents()) {
+				MemoCardPanel card = (MemoCardPanel) c;
+				if (card.getMemo().getId() == targetId) {
+					card.playEntryAnimation();
+					break;
+				}
+			}
+		});
+	}
 
-    private void reloadMemos() {
-        listPanel.removeAll();
-        List<Memo> memos = null;
-        try {
-            memos = memoDAO.selectMemosByUser(userId);
-        } catch (Exception ex) {
-            ex.printStackTrace();
-            memos = List.of();
-        }
-        for (Memo memo : memos) {
-            MemoCardPanel[] cardRef = new MemoCardPanel[1];
-            cardRef[0] = new MemoCardPanel(
-                memo,
-                () -> {
-                    try {
-                        cardRef[0].playDeleteAnimation(() -> {
-                            try {
-                                memoDAO.deleteMemo(memo.getId());
-                                reloadMemos();
-                            } catch (Exception ex) {
-                                ex.printStackTrace();
-                            }
-                        });
-                    } catch (Exception ex) {
-                        ex.printStackTrace();
-                    }
-                },
-                () -> {
-                    new MemoEditorFrame(
-                        SwingUtilities.getWindowAncestor(this), "메모 수정",
-                        memo.getContent(),
-                        updated -> {
-                            try {
-                                memo.setContent(updated);
-                                memoDAO.updateMemo(memo);
-                                reloadMemos();
-                            } catch (Exception ex) {
-                                ex.printStackTrace();
-                            }
-                        }
-                    ).setVisible(true);
-                },
-                () -> {
-                    try {
-                        memo.setFixFlag(!memo.isFixFlag());
-                        memoDAO.updateMemo(memo);
-                        reloadMemos();
-                    } catch (Exception ex) {
-                        ex.printStackTrace();
-                    }
-                }
-            );
-            listPanel.add(cardRef[0]);
-        }
-        listPanel.revalidate();
-        listPanel.repaint();
-    }
-    
-    private void reloadSingleMemoWithAnimation(int targetId) {
-        reloadMemos();
-        SwingUtilities.invokeLater(() -> {
-            for (Component comp : listPanel.getComponents()) {
-                MemoCardPanel card = (MemoCardPanel) comp;
-                if (card.getMemo().getId() == targetId) {
-                    card.playEntryAnimation();
-                    break;
-                }
-            }
-        });
-    }
+	public static class WrapLayout extends FlowLayout {
+		public WrapLayout(int align, int hgap, int vgap) {
+			super(align, hgap, vgap);
+		}
 
-    
-    public static class WrapLayout extends FlowLayout {
-        public WrapLayout(int align, int hgap, int vgap) { super(align, hgap, vgap); }
-        @Override public Dimension preferredLayoutSize(Container target) { return layoutSize(target, true); }
-        @Override public Dimension minimumLayoutSize(Container target) { return layoutSize(target, false); }
-        private Dimension layoutSize(Container target, boolean preferred) {
-            synchronized (target.getTreeLock()) {
-                int targetWidth = target.getWidth() > 0 ? target.getWidth() : Integer.MAX_VALUE;
-                Insets insets = target.getInsets();
-                int maxWidth = targetWidth - (insets.left + insets.right + getHgap() * 2);
-                int x = 0, y = insets.top + getVgap(), rowH = 0;
-                Dimension d = new Dimension(0, 0);
-                for (Component c : target.getComponents()) {
-                    if (!c.isVisible()) continue;
-                    Dimension cd = preferred ? c.getPreferredSize() : c.getMinimumSize();
-                    if (x == 0 || x + cd.width <= maxWidth) {
-                        if (x > 0) x += getHgap();
-                        x += cd.width;
-                        rowH = Math.max(rowH, cd.height);
-                    } else {
-                        x = cd.width;
-                        y += getVgap() + rowH;
-                        rowH = cd.height;
-                    }
-                    d.width = Math.max(d.width, x);
-                }
-                d.height = y + rowH + getVgap();
-                return d;
-            }
-        }
-    }
+		@Override
+		public Dimension preferredLayoutSize(Container target) {
+			return layoutSize(target, true);
+		}
+
+		@Override
+		public Dimension minimumLayoutSize(Container target) {
+			return layoutSize(target, false);
+		}
+
+		private Dimension layoutSize(Container target, boolean preferred) {
+			synchronized (target.getTreeLock()) {
+				int maxWidth = (target.getWidth() > 0 ? target.getWidth() : Integer.MAX_VALUE)
+						- (target.getInsets().left + target.getInsets().right + getHgap() * 2);
+				int x = 0, y = getVgap(), rowH = 0;
+				Dimension d = new Dimension(0, 0);
+				for (Component c : target.getComponents()) {
+					if (!c.isVisible())
+						continue;
+					Dimension cd = preferred ? c.getPreferredSize() : c.getMinimumSize();
+					if (x == 0 || x + cd.width <= maxWidth) {
+						if (x > 0)
+							x += getHgap();
+						x += cd.width;
+						rowH = Math.max(rowH, cd.height);
+					} else {
+						x = cd.width;
+						y += getVgap() + rowH;
+						rowH = cd.height;
+					}
+					d.width = Math.max(d.width, x);
+				}
+				d.height = y + rowH + getVgap();
+				return d;
+			}
+		}
+	}
 }

@@ -5,6 +5,7 @@ import java.awt.FlowLayout;
 import java.awt.Image;
 import java.awt.Window;
 import java.io.File;
+import java.nio.file.Path;
 import java.util.function.Consumer;
 
 import javax.swing.ImageIcon;
@@ -21,13 +22,16 @@ import javax.swing.text.html.HTML;
 import javax.swing.text.html.HTMLDocument;
 import javax.swing.text.html.HTMLEditorKit;
 
-public class MemoEditorFrame extends JDialog {
+public class SwingHtmlEditorWithImage extends JDialog {
 	private JEditorPane editor;
 	private Consumer<String> onSave;
+	private FileSystemImageHandler imgHandler;
 
-	public MemoEditorFrame(Window owner, String title, String initialHtml, Consumer<String> onSave) {
+	public SwingHtmlEditorWithImage(Window owner, String title, String initialHtml, Consumer<String> onSave)
+			throws Exception {
 		super(owner, title, ModalityType.APPLICATION_MODAL);
 		this.onSave = onSave;
+		this.imgHandler = new FileSystemImageHandler();
 		setLayout(new BorderLayout());
 		setSize(600, 400);
 		setLocationRelativeTo(owner);
@@ -74,12 +78,16 @@ public class MemoEditorFrame extends JDialog {
 			return;
 
 		try {
+			String relative = imgHandler.storeImage(imgFile);
+			Path dest = imgHandler.getImagesDir().resolve(Path.of(relative).getFileName());
+			String uri = dest.toUri().toString();
+
 			HTMLDocument doc = (HTMLDocument) editor.getDocument();
 			HTMLEditorKit kit = (HTMLEditorKit) editor.getEditorKit();
-			String imgTag = "<img src=\"" + imgFile.toURI().toString() + "\">";
+			String imgTag = "<img src=\"" + uri + "\">";
 			kit.insertHTML(doc, editor.getCaretPosition(), imgTag, 0, 0, HTML.Tag.IMG);
 		} catch (Exception ex) {
-			ex.printStackTrace();
+			JOptionPane.showMessageDialog(this, "이미지를 삽입하는 중 오류: " + ex.getMessage(), "오류", JOptionPane.ERROR_MESSAGE);
 		}
 	}
 
