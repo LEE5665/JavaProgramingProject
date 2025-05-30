@@ -1,20 +1,25 @@
 package gui.main;
 
+import java.awt.Graphics2D;
+import java.awt.RenderingHints;
+import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.nio.file.StandardCopyOption;
 import java.util.UUID;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import javax.imageio.ImageIO;
+
 public class FileSystemImageHandler {
 	private final Path assetsDir;
 	private final Path imagesDir;
-	private final Pattern imgPattern = Pattern.compile("<img[^>]+src=['\"]([^'\"]+)['\"]");
+	private final Pattern imgPattern = Pattern
+			.compile("<img[^>]+src=[\"'](?:(?:file:.*?/assets/images/)|(?:assets/images/))([^\"']+)[\"']");
 
 	public FileSystemImageHandler() throws IOException {
 		try {
@@ -31,12 +36,21 @@ public class FileSystemImageHandler {
 	public String storeImage(File imageFile) throws IOException {
 		if (imageFile == null || !imageFile.exists())
 			throw new IOException("파일 없음");
-		String name = imageFile.getName();
-		String ext = name.contains(".") ? name.substring(name.lastIndexOf('.')) : "";
-		String uuidName = UUID.randomUUID() + ext;
-		Path dest = imagesDir.resolve(uuidName);
-		Files.copy(imageFile.toPath(), dest, StandardCopyOption.REPLACE_EXISTING);
-		return "assets/images/" + uuidName;
+		BufferedImage src = ImageIO.read(imageFile);
+		int origW = src.getWidth();
+		int origH = src.getHeight();
+		double scale = 150.0 / Math.max(origW, origH);
+		int newW = (int) Math.round(origW * scale);
+		int newH = (int) Math.round(origH * scale);
+		BufferedImage resized = new BufferedImage(newW, newH, BufferedImage.TYPE_INT_ARGB);
+		Graphics2D g = resized.createGraphics();
+		g.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BILINEAR);
+		g.drawImage(src, 0, 0, newW, newH, null);
+		g.dispose();
+		String filename = UUID.randomUUID() + ".png";
+		Path dest = imagesDir.resolve(filename);
+		ImageIO.write(resized, "png", dest.toFile());
+		return filename;
 	}
 
 	public void deleteImagesInMarkdown(String html) {
@@ -44,13 +58,11 @@ public class FileSystemImageHandler {
 			return;
 		Matcher m = imgPattern.matcher(html);
 		while (m.find()) {
-			String src = m.group(1);
-			if (src.startsWith("assets/images/")) {
-				Path imgFile = imagesDir.resolve(src.substring("assets/images/".length()));
-				try {
-					Files.deleteIfExists(imgFile);
-				} catch (IOException ignored) {
-				}
+			String filename = m.group(1);
+			Path imgFile = imagesDir.resolve(filename);
+			try {
+				Files.deleteIfExists(imgFile);
+			} catch (IOException ignored) {
 			}
 		}
 	}

@@ -56,10 +56,8 @@ public class MemoDAO {
 		String selectSql = "SELECT content FROM memo WHERE id=?";
 		String updateSql = "UPDATE memo SET content=?, fix_flag=?, seq=?, update_at=? WHERE id=?";
 		String oldHtml = "";
-
 		try (Connection conn = DB.getConnection()) {
 			conn.setAutoCommit(false);
-
 			try (PreparedStatement ps = conn.prepareStatement(selectSql)) {
 				ps.setInt(1, memo.getId());
 				try (ResultSet rs = ps.executeQuery()) {
@@ -67,10 +65,8 @@ public class MemoDAO {
 						oldHtml = rs.getString("content");
 				}
 			}
-
 			FileSystemImageHandler imgHandler = new FileSystemImageHandler();
 			imgHandler.deleteImagesInMarkdown(oldHtml);
-
 			try (PreparedStatement ps = conn.prepareStatement(updateSql)) {
 				ps.setString(1, memo.getContent());
 				ps.setBoolean(2, memo.isFixFlag());
@@ -89,10 +85,8 @@ public class MemoDAO {
 		String selectSql = "SELECT content FROM memo WHERE id = ?";
 		String deleteSql = "DELETE FROM memo WHERE id = ?";
 		String html = "";
-
 		try (Connection conn = DB.getConnection()) {
 			conn.setAutoCommit(false);
-
 			try (PreparedStatement ps = conn.prepareStatement(selectSql)) {
 				ps.setInt(1, memoId);
 				try (ResultSet rs = ps.executeQuery()) {
@@ -100,10 +94,8 @@ public class MemoDAO {
 						html = rs.getString("content");
 				}
 			}
-
 			FileSystemImageHandler imgHandler = new FileSystemImageHandler();
 			imgHandler.deleteImagesInMarkdown(html);
-
 			try (PreparedStatement ps = conn.prepareStatement(deleteSql)) {
 				ps.setInt(1, memoId);
 				boolean deleted = ps.executeUpdate() > 0;
@@ -112,4 +104,5 @@ public class MemoDAO {
 			}
 		}
 	}
+
 }

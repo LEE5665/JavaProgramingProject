@@ -4,10 +4,14 @@ import java.awt.BorderLayout;
 import java.awt.FlowLayout;
 import java.awt.Image;
 import java.awt.Window;
+import java.awt.image.BufferedImage;
 import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.function.Consumer;
 
+import javax.imageio.ImageIO;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JDialog;
@@ -69,24 +73,29 @@ public class SwingHtmlEditorWithImage extends JDialog {
 		if (chooser.showOpenDialog(this) != JFileChooser.APPROVE_OPTION)
 			return;
 		File imgFile = chooser.getSelectedFile();
-
 		ImageIcon icon = new ImageIcon(
 				new ImageIcon(imgFile.getAbsolutePath()).getImage().getScaledInstance(150, -1, Image.SCALE_SMOOTH));
 		int ok = JOptionPane.showConfirmDialog(this, new JLabel(icon), "이 이미지 삽입?", JOptionPane.OK_CANCEL_OPTION,
 				JOptionPane.PLAIN_MESSAGE);
 		if (ok != JOptionPane.OK_OPTION)
 			return;
-
 		try {
-			String relative = imgHandler.storeImage(imgFile);
-			Path dest = imgHandler.getImagesDir().resolve(Path.of(relative).getFileName());
+			String filename = imgHandler.storeImage(imgFile);
+			Path dest = imgHandler.getImagesDir().resolve(filename);
+			if (!Files.exists(dest))
+				throw new IOException("잘못된 경로: " + dest);
 			String uri = dest.toUri().toString();
-
+			BufferedImage stored = ImageIO.read(dest.toFile());
+			int w = stored.getWidth();
+			int h = stored.getHeight();
 			HTMLDocument doc = (HTMLDocument) editor.getDocument();
 			HTMLEditorKit kit = (HTMLEditorKit) editor.getEditorKit();
-			String imgTag = "<img src=\"" + uri + "\">";
+			String imgTag = String.format("<img src=\"%s\" width=\"%d\" height=\"%d\"/>", uri, w, h);
 			kit.insertHTML(doc, editor.getCaretPosition(), imgTag, 0, 0, HTML.Tag.IMG);
+			editor.revalidate();
+			editor.repaint();
 		} catch (Exception ex) {
+			ex.printStackTrace();
 			JOptionPane.showMessageDialog(this, "이미지를 삽입하는 중 오류: " + ex.getMessage(), "오류", JOptionPane.ERROR_MESSAGE);
 		}
 	}
