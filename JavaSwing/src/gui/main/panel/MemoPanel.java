@@ -115,7 +115,6 @@ public class MemoPanel extends JPanel {
 	}
 
 	private void deleteMemo(Memo memo, MemoCardPanel card) {
-		/* 카드 스냅샷 → GhostPanel */
 		JComponent glass = (JComponent) SwingUtilities.getRootPane(this).getGlassPane();
 		glass.setLayout(null);
 		Rectangle start = SwingUtilities.convertRectangle(card.getParent(), card.getBounds(), glass);
@@ -135,7 +134,7 @@ public class MemoPanel extends JPanel {
 		listPanel.repaint();
 
 		Timeline.builder(ghost).addPropertyToInterpolate("alpha", 1f, 0f)
-				.addPropertyToInterpolate("y", start.y, start.y + 20).setDuration(350)
+				.addPropertyToInterpolate("animY", start.y, start.y + 20).setDuration(350)
 				.addCallback(new TimelineCallbackAdapter() {
 					@Override
 					public void onTimelineStateChanged(TimelineState oldState, TimelineState newState, float v1,
@@ -250,7 +249,7 @@ public class MemoPanel extends JPanel {
 	}
 
 	/* ───────── GhostPanel ───────── */
-	private static class GhostPanel extends JComponent {
+	public static class GhostPanel extends JComponent {
 		private final BufferedImage img;
 		private float alpha = 1f;
 
@@ -267,14 +266,15 @@ public class MemoPanel extends JPanel {
 			return alpha;
 		}
 
-		public void setY(int y) {
+		public void setAnimY(int y) {
 			setLocation(getX(), y);
 		}
 
-		public int getY() {
-			return super.getY();
+		public int getAnimY() {
+			return getY();
 		}
 
+		@Override
 		protected void paintComponent(Graphics g) {
 			Graphics2D g2 = (Graphics2D) g.create();
 			g2.setComposite(AlphaComposite.SrcOver.derive(alpha));
