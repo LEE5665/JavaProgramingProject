@@ -9,7 +9,10 @@ import java.awt.FlowLayout;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Insets;
+import java.awt.Point;
 import java.util.function.BooleanSupplier;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Stream;
 
 import javax.swing.AbstractButton;
@@ -37,6 +40,7 @@ import jiconfont.swing.IconFontSwing;
 public class MemoCardPanel extends JPanel {
 
 	private static final int WIDTH = 170, HEIGHT = 150;
+	private static final Pattern IMG_TAG = Pattern.compile("(?i)<img[^>]+src=[\"']?([^\"'>]+)[\"'][^>]*>");
 	private float alpha = 1f;
 	private boolean hover = false;
 	private final Memo memo;
@@ -85,31 +89,40 @@ public class MemoCardPanel extends JPanel {
 		add(buttonPanel, BorderLayout.NORTH);
 		add(contentScroll, BorderLayout.CENTER);
 
-		addMouseListener(new java.awt.event.MouseAdapter() {
-
-			@Override
+		java.awt.event.MouseAdapter ml = new java.awt.event.MouseAdapter() {
 			public void mouseEntered(java.awt.event.MouseEvent e) {
-				hover = true;
-				setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-				repaint();
-			}
-
-			@Override
-			public void mouseExited(java.awt.event.MouseEvent e) {
-				hover = false;
-				setCursor(Cursor.getDefaultCursor());
-				repaint();
-			}
-
-			@Override
-			public void mouseClicked(java.awt.event.MouseEvent e) {
-				java.awt.Component c = SwingUtilities.getDeepestComponentAt(MemoCardPanel.this, e.getX(), e.getY());
-				if (!SwingUtilities.isDescendingFrom(c, buttonPanel)) {
-					onExpand.run();
+				if (!hover) {
+					hover = true;
+					setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+					repaint();
 				}
 			}
-		});
 
+			public void mouseExited(java.awt.event.MouseEvent e) {
+				Point p = java.awt.MouseInfo.getPointerInfo().getLocation();
+				SwingUtilities.convertPointFromScreen(p, MemoCardPanel.this);
+				if (!MemoCardPanel.this.contains(p)) {
+					hover = false;
+					setCursor(Cursor.getDefaultCursor());
+					repaint();
+				}
+			}
+
+			public void mouseClicked(java.awt.event.MouseEvent e) {
+				java.awt.Component c = SwingUtilities.getDeepestComponentAt(MemoCardPanel.this, e.getX(), e.getY());
+				if (!SwingUtilities.isDescendingFrom(c, buttonPanel))
+					onExpand.run();
+			}
+		};
+		addRecursiveListener(this, ml);
+	}
+
+	private void addRecursiveListener(java.awt.Component comp, java.awt.event.MouseListener ml) {
+		comp.addMouseListener(ml);
+		if (comp instanceof java.awt.Container cont) {
+			for (java.awt.Component child : cont.getComponents())
+				addRecursiveListener(child, ml);
+		}
 	}
 
 	private JButton createButton(Runnable action) {
@@ -146,10 +159,18 @@ public class MemoCardPanel extends JPanel {
 	}
 
 	private String renderSnippet(String html) {
-		String t = html == null ? "" : html.replaceAll("<[^>]+>", "").trim();
+		if (html == null)
+			html = "";
+		Matcher m = IMG_TAG.matcher(html);
+		if (m.find()) {
+			String src = m.group(1);
+			return "<html><body style='margin:0'><img src='" + src
+					+ "' width='50' height='50' style='object-fit:cover;'/></body></html>";
+		}
+		String t = html.replaceAll("<[^>]+>", "").trim();
 		if (t.length() > 100)
 			t = t.substring(0, 100) + "…";
-		return "<html><body style='font-family:Malgun Gothic; font-size:12px;'>" + t + "</body></html>";
+		return "<html><body style='font-family:Malgun Gothic;font-size:12px;'>" + t + "</body></html>";
 	}
 
 	public void paintComponent(Graphics g) {
@@ -221,7 +242,6 @@ public class MemoCardPanel extends JPanel {
 		}
 	}
 
-	// GhostPanel and WrapLayout reused
 	public static class GhostPanel extends JComponent {
 		private final java.awt.image.BufferedImage img;
 		private float alpha = 1f;
@@ -358,6 +378,47 @@ public class MemoCardPanel extends JPanel {
 
 		public Dimension minimumLayoutSize(java.awt.Container t) {
 			return layoutSize(t, false);
+		}
+
+		public void layoutContainer(java.awt.Container t) {
+			synchronized (t.getTreeLock()) {
+				int maxW = t.getWidth() > 0 ? t.getWidth() : Integer.MAX_VALUE;
+				maxW -= t.getInsets().left + t.getInsets().right + getHgap() * 2;
+				int x = 0, y = getVgap(), rowH = 0;
+				java.util.List<java.awt.Component> row = new java.util.ArrayList<>();
+				for (java.awt.Component c : t.getComponents()) {
+					if (!c.isVisible())
+						continue;
+					Dimension cd = c.getPreferredSize();
+					if (x == 0 || x + cd.width <= maxW) {
+						if (x > 0)
+							x += getHgap();
+						x += cd.width;
+						rowH = Math.max(rowH, cd.height);
+						row.add(c);
+					} else {
+						int offset = (maxW - x) / 2 + getHgap();
+						int rx = t.getInsets().left + offset;
+						for (java.awt.Component rc : row) {
+							Dimension rcd = rc.getPreferredSize();
+							rc.setBounds(rx, y, rcd.width, rcd.height);
+							rx += rcd.width + getHgap();
+						}
+						row.clear();
+						x = cd.width;
+						rowH = cd.height;
+						y += getVgap() + rowH;
+						row.add(c);
+					}
+				}
+				int offset = (maxW - x) / 2 + getHgap();
+				int rx = t.getInsets().left + offset;
+				for (java.awt.Component rc : row) {
+					Dimension rcd = rc.getPreferredSize();
+					rc.setBounds(rx, y, rcd.width, rcd.height);
+					rx += rcd.width + getHgap();
+				}
+			}
 		}
 
 		private Dimension layoutSize(java.awt.Container t, boolean pref) {

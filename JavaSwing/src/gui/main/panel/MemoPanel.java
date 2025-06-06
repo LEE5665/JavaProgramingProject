@@ -1,6 +1,7 @@
 package gui.main.panel;
 
 import java.awt.BorderLayout;
+import java.awt.Dimension;
 import java.awt.Rectangle;
 import java.awt.image.BufferedImage;
 import java.util.HashMap;
@@ -121,10 +122,8 @@ public class MemoPanel extends JPanel {
 		Timeline.builder(ghost).addPropertyToInterpolate("alpha", 1f, 0f)
 				.addPropertyToInterpolate("animY", start.y, start.y + 20).setDuration(350)
 				.setEase(new Spline(0.4f, 0f, 0.2f, 1f)).addCallback(new TimelineCallbackAdapter() {
-					@Override
-					public void onTimelineStateChanged(TimelineState oldState, TimelineState newState, float f1,
-							float f2) {
-						if (newState == TimelineState.DONE) {
+					public void onTimelineStateChanged(TimelineState o, TimelineState n, float f1, float f2) {
+						if (n == TimelineState.DONE) {
 							glass.remove(ghost);
 							if (glass.getComponentCount() == 0)
 								glass.setVisible(false);
@@ -146,9 +145,8 @@ public class MemoPanel extends JPanel {
 			memos = dao.selectMemosByUser(userId);
 		} catch (Exception ex) {
 			ex.printStackTrace();
-			memos = java.util.List.of();
+			memos = List.of();
 		}
-
 		for (Memo m : memos) {
 			MemoCardPanel[] ref = new MemoCardPanel[1];
 			ref[0] = new MemoCardPanel(m, () -> deleteMemo(m, ref[0]), () -> editMemo(m), () -> {
@@ -191,7 +189,7 @@ public class MemoPanel extends JPanel {
 		JDialog dlg = new JDialog(SwingUtilities.getWindowAncestor(this));
 		dlg.setTitle("메모");
 		dlg.setModal(false);
-		dlg.setSize(500, 400);
+		dlg.setMinimumSize(new Dimension(500, 400));
 
 		final MemoCardPanel.FullViewPanel[] holder = new MemoCardPanel.FullViewPanel[1];
 		holder[0] = new MemoCardPanel.FullViewPanel(memo, () -> {
@@ -208,6 +206,11 @@ public class MemoPanel extends JPanel {
 		}, dlg::dispose);
 
 		dlg.setContentPane(holder[0]);
+		dlg.pack();
+		Dimension s = dlg.getSize();
+		if (s.width < 500 || s.height < 400)
+			dlg.setSize(Math.max(500, s.width), Math.max(400, s.height));
+
 		dlg.setLocationRelativeTo(this);
 		dlg.setVisible(true);
 
