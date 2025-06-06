@@ -30,11 +30,13 @@ public class SwingHtmlEditorWithImage extends JDialog {
 	private JEditorPane editor;
 	private Consumer<String> onSave;
 	private FileSystemImageHandler imgHandler;
+	private String initialHtml; // 초기 HTML 저장
 
 	public SwingHtmlEditorWithImage(Window owner, String title, String initialHtml, Consumer<String> onSave)
 			throws Exception {
 		super(owner, title, ModalityType.APPLICATION_MODAL);
 		this.onSave = onSave;
+		this.initialHtml = initialHtml; // 초기 HTML 저장
 		this.imgHandler = new FileSystemImageHandler();
 		setLayout(new BorderLayout());
 		setSize(600, 400);
@@ -90,7 +92,7 @@ public class SwingHtmlEditorWithImage extends JDialog {
 			int h = stored.getHeight();
 			HTMLDocument doc = (HTMLDocument) editor.getDocument();
 			HTMLEditorKit kit = (HTMLEditorKit) editor.getEditorKit();
-			String imgTag = String.format("<img src=\"%s\" width=\"%d\" height=\"%d\"/>", uri, w, h);
+			String imgTag = String.format("<img src=\"%s\" width=\"%d\" height=\"%d\" style=\"display: block; margin: 5px 0;\"/>", uri, w, h);
 			kit.insertHTML(doc, editor.getCaretPosition(), imgTag, 0, 0, HTML.Tag.IMG);
 			editor.revalidate();
 			editor.repaint();
@@ -102,6 +104,10 @@ public class SwingHtmlEditorWithImage extends JDialog {
 
 	private void saveAndClose() {
 		String html = editor.getText();
+		
+		// 제거된 이미지 파일 삭제
+		imgHandler.deleteRemovedImages(initialHtml, html);
+		
 		onSave.accept(html);
 		dispose();
 	}

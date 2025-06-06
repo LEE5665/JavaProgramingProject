@@ -21,6 +21,34 @@ public class FileSystemImageHandler {
 	private final Pattern imgPattern = Pattern
 			.compile("<img[^>]+src=[\"'](?:(?:file:.*?/assets/images/)|(?:assets/images/))([^\"']+)[\"']");
 
+	/**
+	 * 이전 HTML과 새 HTML을 비교하여 제거된 이미지 파일을 삭제합니다.
+	 * 
+	 * @param oldHtml 이전 HTML 내용
+	 * @param newHtml 새 HTML 내용
+	 */
+	public void deleteRemovedImages(String oldHtml, String newHtml) {
+		if (oldHtml == null || oldHtml.isBlank())
+			return;
+			
+		// 이전 HTML에서 이미지 파일명 추출
+		Matcher oldMatcher = imgPattern.matcher(oldHtml);
+		while (oldMatcher.find()) {
+			String filename = oldMatcher.group(1);
+			
+			// 새 HTML에 해당 이미지가 없으면 파일 삭제
+			if (newHtml == null || !newHtml.contains(filename)) {
+				Path imgFile = imagesDir.resolve(filename);
+				try {
+					Files.deleteIfExists(imgFile);
+					System.out.println("이미지 파일 삭제: " + filename);
+				} catch (IOException ignored) {
+					System.err.println("이미지 파일 삭제 실패: " + filename);
+				}
+			}
+		}
+	}
+
 	public FileSystemImageHandler() throws IOException {
 		try {
 			Path base = Paths.get(getClass().getProtectionDomain().getCodeSource().getLocation().toURI()).getParent();

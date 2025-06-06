@@ -5,8 +5,6 @@ import java.awt.FlowLayout;
 import java.awt.Window;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
-import java.io.File;
-import java.io.IOException;
 import java.util.function.Consumer;
 
 import javax.swing.JButton;
@@ -14,7 +12,6 @@ import javax.swing.JDialog;
 import javax.swing.JEditorPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
-import javax.swing.text.html.HTMLDocument;
 import javax.swing.text.html.HTMLEditorKit;
 import javax.swing.text.html.StyleSheet;
 
@@ -41,10 +38,14 @@ public class MemoViewerFrame extends JDialog {
 	 * @param onClose 창이 닫힐 때 호출될 콜백
 	 */
 	public MemoViewerFrame(Window owner, Memo memo, Consumer<Memo> onEdit, Runnable onClose) {
-		super(owner, "메모 확인", ModalityType.MODELESS);
+		super(owner, "메모 보기", ModalityType.MODELESS);
 		this.memo = memo;
 		this.onEdit = onEdit;
 		this.onClose = onClose;
+
+		// 창 설정
+		setSize(500, 400);
+		setLocationRelativeTo(owner);
 		setDefaultCloseOperation(DISPOSE_ON_CLOSE);
 		setLayout(new BorderLayout());
 
@@ -59,16 +60,6 @@ public class MemoViewerFrame extends JDialog {
 		StyleSheet styleSheet = kit.getStyleSheet();
 		styleSheet.addRule("body { font-family: 'Malgun Gothic', sans-serif; font-size: 12px; margin: 10px; }");
 		styleSheet.addRule("p { margin: 0 0 10px 0; }");
-		styleSheet.addRule("br { line-height: 150%; }");
-		// ▶️ 에디터와 동일한 이미지 규칙
-		styleSheet.addRule("img { display:block; margin:6px 0; max-width:100%; height:auto; }");
-
-		// ▶️ base URL 설정 – 상대경로 이미지 표시
-		try {
-			((HTMLDocument) contentPane.getDocument()).setBase(new File(".").toURI().toURL());
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
 
 		// 내용 설정
 		updateContent();
@@ -77,30 +68,32 @@ public class MemoViewerFrame extends JDialog {
 		JScrollPane scrollPane = new JScrollPane(contentPane);
 		add(scrollPane, BorderLayout.CENTER);
 
-		// 버튼 패널 (수정, 닫기)
-		JPanel btnPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 5));
-		JButton btnEdit = new JButton("수정");
-		btnEdit.addActionListener(e -> {
-			onEdit.accept(memo);
-			dispose();
-		});
-		JButton btnClose = new JButton("닫기");
-		btnClose.addActionListener(e -> dispose());
-		btnPanel.add(btnEdit);
-		btnPanel.add(btnClose);
-		add(btnPanel, BorderLayout.SOUTH);
+		// 버튼 패널
+		JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 10));
 
-		// 닫힘 콜백
-		addWindowListener(new WindowAdapter() {
-			@Override
-			public void windowClosed(WindowEvent e) {
-				onClose.run();
+		JButton editButton = new JButton("수정");
+		editButton.addActionListener(e -> {
+			if (onEdit != null) {
+				onEdit.accept(memo);
 			}
 		});
 
-		setSize(500, 400);
-		setLocationRelativeTo(owner);
-		setVisible(true);
+		JButton closeButton = new JButton("닫기");
+		closeButton.addActionListener(e -> dispose());
+
+		buttonPanel.add(editButton);
+		buttonPanel.add(closeButton);
+		add(buttonPanel, BorderLayout.SOUTH);
+
+		// 창이 닫힐 때 콜백 호출
+		addWindowListener(new WindowAdapter() {
+			@Override
+			public void windowClosed(WindowEvent e) {
+				if (onClose != null) {
+					onClose.run();
+				}
+			}
+		});
 	}
 
 	/**
