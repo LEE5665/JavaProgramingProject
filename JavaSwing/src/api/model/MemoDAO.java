@@ -49,13 +49,14 @@ public class MemoDAO {
 	}
 
 	public boolean updateMemo(Memo memo) throws SQLException {
-		String sql = "UPDATE memo SET content=?, fix_flag=?, seq=?, update_at=? WHERE id=?";
+		String sql = "UPDATE memo SET content = ?, fix_flag = ?, seq = ?, update_at = datetime('now','localtime') WHERE id = ?";
+
 		try (Connection conn = DB.getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
+
 			ps.setString(1, memo.getContent());
 			ps.setBoolean(2, memo.isFixFlag());
 			ps.setInt(3, memo.getSeq());
-			ps.setString(4, memo.getUpdateAt());
-			ps.setInt(5, memo.getId());
+			ps.setInt(4, memo.getId());
 			return ps.executeUpdate() > 0;
 		}
 	}

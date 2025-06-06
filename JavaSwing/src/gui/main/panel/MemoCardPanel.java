@@ -54,6 +54,9 @@ public class MemoCardPanel extends JPanel {
 	/* ---------- 데이터 ---------- */
 	private final Memo memo;
 
+	/* ---------- 콜백 ---------- */
+	private Runnable onCardClick;
+
 	/* ---------- UI 컴포넌트 ---------- */
 	private final JEditorPane contentPane;
 	private final JPanel buttonPanel;
@@ -159,6 +162,9 @@ public class MemoCardPanel extends JPanel {
 
 		/* ----- Hover 효과 ----- */
 		setupHoverEffect();
+
+		/* ----- 클릭 이벤트 ----- */
+		setupClickEvent();
 	}
 
 	/*
@@ -258,6 +264,55 @@ public class MemoCardPanel extends JPanel {
 		contentScroll.getHorizontalScrollBar().addMouseListener(delegateHover);
 		for (Component c : buttonPanel.getComponents())
 			c.addMouseListener(delegateHover);
+	}
+
+	/* 클릭 이벤트 설정 */
+	private void setupClickEvent() {
+		MouseAdapter clickAdapter = new MouseAdapter() {
+			@Override
+			public void mouseClicked(MouseEvent e) {
+				// 버튼 영역 클릭은 무시 (버튼 자체의 이벤트 처리)
+				if (isClickOnButtons(e.getPoint())) {
+					return;
+				}
+
+				// 카드 클릭 이벤트 처리
+				if (onCardClick != null) {
+					onCardClick.run();
+				}
+			}
+		};
+
+		addMouseListener(clickAdapter);
+		contentPane.addMouseListener(clickAdapter);
+		contentScroll.addMouseListener(clickAdapter);
+		contentScroll.getViewport().addMouseListener(clickAdapter);
+	}
+
+	/* 클릭 위치가 버튼 영역인지 확인 */
+	private boolean isClickOnButtons(Point point) {
+		// 버튼 패널 영역 내 클릭인지 확인
+		Point buttonPanelPoint = SwingUtilities.convertPoint(this, point, buttonPanel);
+		if (buttonPanel.contains(buttonPanelPoint)) {
+			return true;
+		}
+
+		// 개별 버튼 영역 내 클릭인지 확인
+		for (Component c : buttonPanel.getComponents()) {
+			Point buttonPoint = SwingUtilities.convertPoint(this, point, c);
+			if (c.contains(buttonPoint)) {
+				return true;
+			}
+		}
+
+		return false;
+	}
+
+	/**
+	 * 카드 클릭 이벤트 설정
+	 */
+	public void setOnCardClick(Runnable onCardClick) {
+		this.onCardClick = onCardClick;
 	}
 
 	/*

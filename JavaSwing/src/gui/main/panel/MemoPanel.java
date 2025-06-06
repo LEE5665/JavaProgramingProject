@@ -6,7 +6,9 @@ import java.awt.Container;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.Insets;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import javax.swing.JButton;
 import javax.swing.JPanel;
@@ -18,6 +20,7 @@ import javax.swing.border.EmptyBorder;
 import api.model.Memo;
 import api.model.MemoDAO;
 import gui.main.MemoEditorFrame;
+import gui.main.MemoViewerFrame;
 
 public class MemoPanel extends JPanel {
 	private JPanel listPanel;
@@ -25,6 +28,9 @@ public class MemoPanel extends JPanel {
 	private int userId;
 
 	private final MemoDAO memoDAO = new MemoDAO();
+
+	// 열린 메모 창을 관리하는 맵 (메모 ID -> 메모 뷰어 창)
+	private final Map<Integer, MemoViewerFrame> openViewers = new HashMap<>();
 
 	public MemoPanel(int userId) {
 		this.userId = userId;
@@ -93,48 +99,144 @@ public class MemoPanel extends JPanel {
 		}
 		for (Memo memo : memos) {
 			MemoCardPanel[] cardRef = new MemoCardPanel[1];
-			cardRef[0] = new MemoCardPanel(memo, () -> {
-				try {
-					cardRef[0].playDeleteAnimation(() -> {
+			cardRef[0] = new MemoCardPanel(memo,
+					// 삭제 콜백
+					() -> {
 						try {
-							memoDAO.deleteMemo(memo.getId());
+							cardRef[0].playDeleteAnimation(() -> {
+								try {
+									// 열린 뷰어가 있으면 닫기
+									closeViewer(memo.getId());
+									memoDAO.deleteMemo(memo.getId());
+									reloadMemos();
+								} catch (Exception ex) {
+									ex.printStackTrace();
+								}
+							});
+						} catch (Exception ex) {
+							ex.printStackTrace();
+						}
+					},
+					// 수정 콜백
+					() -> {
+						try {
+							new MemoEditorFrame(SwingUtilities.getWindowAncestor(this), "메모 수정", memo.getContent(),
+									updated -> {
+										try {
+											if (updated != null) {
+												memo.setContent(updated);
+												memoDAO.updateMemo(memo);
+
+												// 열린 뷰어가 있으면 내용 업데이트
+												updateViewer(memo);
+
+												reloadMemos();
+											}
+										} catch (Exception ex) {
+											ex.printStackTrace();
+										}
+									}).setVisible(true);
+						} catch (Exception ex) {
+							ex.printStackTrace();
+						}
+					},
+					// 고정 콜백
+					() -> {
+						try {
+							memo.setFixFlag(!memo.isFixFlag());
+							memoDAO.updateMemo(memo);
 							reloadMemos();
 						} catch (Exception ex) {
 							ex.printStackTrace();
 						}
 					});
-				} catch (Exception ex) {
-					ex.printStackTrace();
-				}
-			}, () -> {
-				try {
-					new MemoEditorFrame(SwingUtilities.getWindowAncestor(this), "메모 수정", memo.getContent(), updated -> {
-						try {
-							if (updated != null) {
-								memo.setContent(updated);
-								memoDAO.updateMemo(memo);
-								reloadMemos();
-							}
-						} catch (Exception ex) {
-							ex.printStackTrace();
-						}
-					}).setVisible(true);
-				} catch (Exception ex) {
-					ex.printStackTrace();
-				}
-			}, () -> {
-				try {
-					memo.setFixFlag(!memo.isFixFlag());
-					memoDAO.updateMemo(memo);
-					reloadMemos();
-				} catch (Exception ex) {
-					ex.printStackTrace();
-				}
-			});
+
+			// 카드 클릭 이벤트 설정
+			cardRef[0].setOnCardClick(() -> openMemoViewer(memo));
+
 			listPanel.add(cardRef[0]);
 		}
 		listPanel.revalidate();
 		listPanel.repaint();
+	}
+
+	/**
+	 * 메모 뷰어 창 열기 이미 열려있는 경우 해당 창을 활성화
+	 */
+	private void openMemoViewer(Memo memo) {
+		int memoId = memo.getId();
+
+		// 이미 열려있는 뷰어가 있으면 활성화
+		if (openViewers.containsKey(memoId)) {
+			MemoViewerFrame viewer = openViewers.get(memoId);
+			viewer.toFront();
+			viewer.requestFocus();
+			return;
+		}
+
+		// 새 뷰어 창 생성
+		MemoViewerFrame viewer = new MemoViewerFrame(SwingUtilities.getWindowAncestor(this), memo,
+				// 수정 콜백
+				editMemo -> {
+					try {
+						new MemoEditorFrame(SwingUtilities.getWindowAncestor(this), "메모 수정", editMemo.getContent(),
+								updated -> {
+									try {
+										if (updated != null) {
+											editMemo.setContent(updated);
+											memoDAO.updateMemo(editMemo);
+
+											// 열린 뷰어 내용 업데이트
+											updateViewer(editMemo);
+
+											reloadMemos();
+										}
+									} catch (Exception ex) {
+										ex.printStackTrace();
+									}
+								}).setVisible(true);
+					} catch (Exception ex) {
+						ex.printStackTrace();
+					}
+				},
+				// 닫기 콜백
+				() -> openViewers.remove(memoId));
+
+		// 맵에 추가하고 표시
+		openViewers.put(memoId, viewer);
+		viewer.setVisible(true);
+	}
+
+	/**
+	 * 열린 뷰어 내용 업데이트
+	 */
+	private void updateViewer(Memo memo) {
+		int memoId = memo.getId();
+		if (openViewers.containsKey(memoId)) {
+			MemoViewerFrame viewer = openViewers.get(memoId);
+			viewer.updateContent();
+		}
+	}
+
+	/**
+	 * 뷰어 창 닫기
+	 */
+	private void closeViewer(int memoId) {
+		if (openViewers.containsKey(memoId)) {
+			MemoViewerFrame viewer = openViewers.get(memoId);
+			viewer.dispose();
+			openViewers.remove(memoId);
+		}
+	}
+
+	/**
+	 * 모든 뷰어 창 닫기
+	 */
+	public void closeAllViewers() {
+		for (MemoViewerFrame viewer : openViewers.values()) {
+			viewer.dispose();
+		}
+		openViewers.clear();
 	}
 
 	private void reloadSingleMemoWithAnimation(int targetId) {

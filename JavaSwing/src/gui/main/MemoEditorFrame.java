@@ -6,14 +6,12 @@ import java.awt.FlowLayout;
 import java.awt.Font;
 import java.awt.Image;
 import java.awt.Window;
-import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
-import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.function.Consumer;
 import java.util.stream.Stream;
 
-import javax.imageio.ImageIO;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JColorChooser;
@@ -33,6 +31,7 @@ import javax.swing.text.StyledEditorKit;
 import javax.swing.text.html.HTML;
 import javax.swing.text.html.HTMLDocument;
 import javax.swing.text.html.HTMLEditorKit;
+import javax.swing.text.html.StyleSheet;
 
 public class MemoEditorFrame extends JDialog {
 	private final JEditorPane editor;
@@ -60,7 +59,7 @@ public class MemoEditorFrame extends JDialog {
 		editor.setEditable(true);
 		editor.putClientProperty(JEditorPane.HONOR_DISPLAY_PROPERTIES, Boolean.TRUE);
 		editor.setFont(new Font("Malgun Gothic", Font.PLAIN, 12));
-
+		configureHtmlEditor();
 		// 툴바 생성
 		JToolBar toolbar = createToolbar();
 		add(toolbar, BorderLayout.NORTH);
@@ -196,16 +195,16 @@ public class MemoEditorFrame extends JDialog {
 			return;
 
 		try {
+			// ① 파일 저장
 			String filename = imgHandler.storeImage(imgFile);
-			Path dest = imgHandler.getImagesDir().resolve(filename);
-			String uri = dest.toUri().toString();
 
-			BufferedImage stored = ImageIO.read(dest.toFile());
-			int w = stored.getWidth(), h = stored.getHeight();
+			// ② 에디터-루트 기준 상대 경로 생성 (예: assets/images/abcd1234.png)
+			String relativeSrc = Paths.get("assets", "images", filename).toString().replace("\\", "/");
 
+			// ③ <img> 태그 삽입 – 폭/높이 속성 제거, CSS로 처리
 			HTMLDocument doc = (HTMLDocument) editor.getDocument();
 			HTMLEditorKit kit = (HTMLEditorKit) editor.getEditorKit();
-			String imgTag = String.format("<img src=\"%s\" width=\"%d\" height=\"%d\"/>", uri, w, h);
+			String imgTag = String.format("<img src=\"%s\"/>", relativeSrc);
 			kit.insertHTML(doc, editor.getCaretPosition(), imgTag, 0, 0, HTML.Tag.IMG);
 
 			editor.revalidate();
@@ -219,5 +218,26 @@ public class MemoEditorFrame extends JDialog {
 	private void saveAndClose() {
 		onSave.accept(editor.getText());
 		dispose();
+	}
+
+	private void configureHtmlEditor() {
+		// HTML 에디터 키트 설정
+		HTMLEditorKit kit = (HTMLEditorKit) editor.getEditorKit();
+		HTMLDocument doc = (HTMLDocument) editor.getDocument();
+
+		// 스타일시트 설정
+		StyleSheet styleSheet = kit.getStyleSheet();
+		styleSheet.addRule("body { font-family: 'Malgun Gothic', sans-serif; font-size: 12px; margin: 10px; }");
+		styleSheet.addRule("p { margin: 0 0 10px 0; }");
+		styleSheet.addRule("br { line-height: 150%; }");
+		// ▶️ 이미지가 자동 줄바꿈 + 여백을 갖도록
+		styleSheet.addRule("img { display:block; margin:6px 0; max-width:100%; height:auto; }");
+
+		// ▶️ 에디터-기준 base URL 설정 → <img src="assets/images/…"> 같은 상대경로 사용 가능
+		try {
+			doc.setBase(new File(".").toURI().toURL());
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
 	}
 }
