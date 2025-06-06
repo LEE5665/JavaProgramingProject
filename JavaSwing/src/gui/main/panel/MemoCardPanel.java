@@ -15,10 +15,12 @@ import java.util.stream.Stream;
 import javax.swing.AbstractButton;
 import javax.swing.BorderFactory;
 import javax.swing.JButton;
+import javax.swing.JComponent;
 import javax.swing.JEditorPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JToggleButton;
+import javax.swing.SwingUtilities;
 import javax.swing.UIManager;
 import javax.swing.border.EmptyBorder;
 
@@ -33,18 +35,21 @@ import jiconfont.icons.font_awesome.FontAwesome;
 import jiconfont.swing.IconFontSwing;
 
 public class MemoCardPanel extends JPanel {
+
 	private static final int WIDTH = 170, HEIGHT = 150;
 	private float alpha = 1f;
+	private boolean hover = false;
 	private final Memo memo;
 	private final JScrollPane contentScroll;
 	private final JPanel buttonPanel;
-	private final JButton zoomBtn, editBtn, delBtn;
+	private final JButton editBtn, delBtn;
 	private final JToggleButton pinBtn;
 	private final Runnable onExpand;
 
 	public MemoCardPanel(Memo memo, Runnable onDelete, Runnable onEdit, Runnable onPin, Runnable onExpand) {
 		this.memo = memo;
 		this.onExpand = onExpand;
+
 		setLayout(new BorderLayout());
 		setOpaque(false);
 		setPreferredSize(new Dimension(WIDTH, HEIGHT));
@@ -67,14 +72,12 @@ public class MemoCardPanel extends JPanel {
 		buttonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 0, 0));
 		buttonPanel.setOpaque(false);
 
-		zoomBtn = createButton(() -> onExpand.run());
 		pinBtn = createToggle(memo::isFixFlag, onPin);
 		editBtn = createButton(onEdit);
 		delBtn = createButton(onDelete);
 
-		Stream.of(zoomBtn, pinBtn, editBtn, delBtn).forEach(this::setupIcon);
+		Stream.of(pinBtn, editBtn, delBtn).forEach(this::setupIcon);
 
-		buttonPanel.add(zoomBtn);
 		buttonPanel.add(pinBtn);
 		buttonPanel.add(editBtn);
 		buttonPanel.add(delBtn);
@@ -83,14 +86,30 @@ public class MemoCardPanel extends JPanel {
 		add(contentScroll, BorderLayout.CENTER);
 
 		addMouseListener(new java.awt.event.MouseAdapter() {
+
+			@Override
 			public void mouseEntered(java.awt.event.MouseEvent e) {
-				setHover(true);
+				hover = true;
+				setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+				repaint();
 			}
 
+			@Override
 			public void mouseExited(java.awt.event.MouseEvent e) {
-				setHover(false);
+				hover = false;
+				setCursor(Cursor.getDefaultCursor());
+				repaint();
+			}
+
+			@Override
+			public void mouseClicked(java.awt.event.MouseEvent e) {
+				java.awt.Component c = SwingUtilities.getDeepestComponentAt(MemoCardPanel.this, e.getX(), e.getY());
+				if (!SwingUtilities.isDescendingFrom(c, buttonPanel)) {
+					onExpand.run();
+				}
 			}
 		});
+
 	}
 
 	private JButton createButton(Runnable action) {
@@ -98,6 +117,8 @@ public class MemoCardPanel extends JPanel {
 		b.setMargin(new Insets(0, 4, 0, 4));
 		b.setBorderPainted(false);
 		b.setContentAreaFilled(false);
+		b.setFocusable(false);
+		b.setRolloverEnabled(false);
 		b.addActionListener(e -> action.run());
 		return b;
 	}
@@ -108,30 +129,20 @@ public class MemoCardPanel extends JPanel {
 		t.setMargin(new Insets(0, 4, 0, 4));
 		t.setBorderPainted(false);
 		t.setContentAreaFilled(false);
+		t.setFocusable(false);
+		t.setRolloverEnabled(false);
 		t.addActionListener(e -> action.run());
 		return t;
 	}
 
 	private void setupIcon(AbstractButton btn) {
 		boolean dark = FlatLaf.isLafDark();
-		Color accent = dark ? new Color(0x8AB4F8) // 다크 모드용
-				: new Color(0x0A84FF); // 라이트 모드용
-
-		FontAwesome fa = switch (btn) {
-		case JButton b when b == zoomBtn -> FontAwesome.SEARCH_PLUS;
-		case JToggleButton t when t == pinBtn -> FontAwesome.THUMB_TACK;
-		case JButton b when b == editBtn -> FontAwesome.PENCIL;
-		default -> FontAwesome.TIMES;
-		};
-
+		Color accent = dark ? new Color(0x8AB4F8) : new Color(0x0A84FF);
+		FontAwesome fa = btn == pinBtn ? FontAwesome.THUMB_TACK
+				: btn == editBtn ? FontAwesome.PENCIL : FontAwesome.TIMES;
 		btn.setIcon(IconFontSwing.buildIcon(fa, 16, accent));
 		if (btn instanceof JToggleButton t)
-			t.setSelectedIcon(IconFontSwing.buildIcon(fa, 16, accent));
-	}
-
-	private void setHover(boolean h) {
-		setCursor(h ? Cursor.getPredefinedCursor(Cursor.HAND_CURSOR) : Cursor.getDefaultCursor());
-		repaint();
+			t.setSelectedIcon(btn.getIcon());
 	}
 
 	private String renderSnippet(String html) {
@@ -152,6 +163,10 @@ public class MemoCardPanel extends JPanel {
 		if (memo.isFixFlag()) {
 			g2.setColor(new Color(255, 216, 80, 160));
 			g2.fillRoundRect(0, 0, 8, getHeight() - 6, arc / 2, arc / 2);
+		}
+		if (hover) {
+			g2.setColor(new Color(255, 255, 255, 60));
+			g2.fillRoundRect(0, 0, getWidth() - 6, getHeight() - 6, arc, arc);
 		}
 		Color border = UIManager.getColor("Component.borderColor");
 		if (border == null)
@@ -198,13 +213,178 @@ public class MemoCardPanel extends JPanel {
 		t.play();
 	}
 
-	@Override
 	public void updateUI() {
 		super.updateUI();
-		if (zoomBtn != null) {
-			Stream.of(zoomBtn, pinBtn, editBtn, delBtn).forEach(this::setupIcon);
+		if (pinBtn != null) {
+			Stream.of(pinBtn, editBtn, delBtn).forEach(this::setupIcon);
 			repaint();
 		}
 	}
 
+	// GhostPanel and WrapLayout reused
+	public static class GhostPanel extends JComponent {
+		private final java.awt.image.BufferedImage img;
+		private float alpha = 1f;
+
+		public GhostPanel(java.awt.image.BufferedImage img) {
+			this.img = img;
+		}
+
+		public void setAlpha(float a) {
+			alpha = a;
+			repaint();
+		}
+
+		public float getAlpha() {
+			return alpha;
+		}
+
+		public void setAnimY(int y) {
+			setLocation(getX(), y);
+		}
+
+		public int getAnimY() {
+			return getY();
+		}
+
+		protected void paintComponent(Graphics g) {
+			Graphics2D g2 = (Graphics2D) g.create();
+			g2.setComposite(AlphaComposite.SrcOver.derive(alpha));
+			g2.drawImage(img, 0, 0, null);
+			g2.dispose();
+		}
+	}
+
+	public static class FullViewPanel extends JPanel {
+		private float alpha = 0f;
+		private final Memo memo;
+		private final JToggleButton pinBtn;
+		private final JButton editBtn;
+		private final JButton closeBtn;
+		private final JScrollPane scrollPane;
+		private final JEditorPane html;
+
+		public FullViewPanel(Memo memo, Runnable onPin, Runnable onEdit, Runnable onClose) {
+			this.memo = memo;
+			setLayout(new BorderLayout());
+			setOpaque(true);
+
+			JPanel bar = new JPanel(new FlowLayout(FlowLayout.RIGHT, 8, 0));
+			bar.setOpaque(false);
+
+			pinBtn = mkToggle(onPin);
+			editBtn = mkButton(onEdit);
+			closeBtn = mkButton(onClose);
+
+			bar.add(pinBtn);
+			bar.add(editBtn);
+			bar.add(closeBtn);
+			add(bar, BorderLayout.NORTH);
+
+			html = new JEditorPane("text/html", memo.getContent());
+			html.setEditable(false);
+			html.putClientProperty(JEditorPane.HONOR_DISPLAY_PROPERTIES, true);
+
+			scrollPane = new JScrollPane(html);
+			add(scrollPane, BorderLayout.CENTER);
+
+			applyTheme();
+		}
+
+		private JButton mkButton(Runnable act) {
+			JButton b = new JButton();
+			b.setBorderPainted(false);
+			b.setContentAreaFilled(false);
+			b.setFocusable(false);
+			b.setRolloverEnabled(false);
+			b.addActionListener(e -> act.run());
+			return b;
+		}
+
+		private JToggleButton mkToggle(Runnable act) {
+			JToggleButton t = new JToggleButton();
+			t.setSelected(memo.isFixFlag());
+			t.setBorderPainted(false);
+			t.setContentAreaFilled(false);
+			t.setFocusable(false);
+			t.setRolloverEnabled(false);
+			t.addActionListener(e -> act.run());
+			return t;
+		}
+
+		private void applyTheme() {
+			boolean dark = UIManager.getLookAndFeel().getName().toLowerCase().contains("dark");
+			Color bg = dark ? new Color(0x424140) : Color.WHITE;
+			Color border = dark ? new Color(0x444444) : new Color(0xCCCCCC);
+			html.setBackground(bg);
+			setBorder(new javax.swing.border.CompoundBorder(new javax.swing.border.LineBorder(border, 2, true),
+					new EmptyBorder(16, 16, 16, 16)));
+			scrollPane.getViewport().setBackground(bg);
+			Color accent = dark ? new Color(0x8AB4F8) : new Color(0x0A84FF);
+			pinBtn.setIcon(IconFontSwing.buildIcon(FontAwesome.THUMB_TACK, 18, accent));
+			pinBtn.setSelectedIcon(pinBtn.getIcon());
+			editBtn.setIcon(IconFontSwing.buildIcon(FontAwesome.PENCIL, 18, accent));
+			closeBtn.setIcon(IconFontSwing.buildIcon(FontAwesome.TIMES, 18, accent));
+		}
+
+		public void updateUI() {
+			super.updateUI();
+			if (scrollPane != null)
+				applyTheme();
+		}
+
+		public void refreshContent() {
+			html.setText(memo.getContent());
+		}
+
+		public float getAlpha() {
+			return alpha;
+		}
+
+		public void setAlpha(float a) {
+			alpha = a;
+			repaint();
+		}
+	}
+
+	public static class WrapLayout extends FlowLayout {
+		public WrapLayout(int align, int hg, int vg) {
+			super(align, hg, vg);
+		}
+
+		public Dimension preferredLayoutSize(java.awt.Container t) {
+			return layoutSize(t, true);
+		}
+
+		public Dimension minimumLayoutSize(java.awt.Container t) {
+			return layoutSize(t, false);
+		}
+
+		private Dimension layoutSize(java.awt.Container t, boolean pref) {
+			synchronized (t.getTreeLock()) {
+				int maxW = (t.getWidth() > 0 ? t.getWidth() : Integer.MAX_VALUE)
+						- (t.getInsets().left + t.getInsets().right + getHgap() * 2);
+				int x = 0, y = getVgap(), rowH = 0;
+				Dimension d = new Dimension(0, 0);
+				for (java.awt.Component c : t.getComponents()) {
+					if (!c.isVisible())
+						continue;
+					Dimension cd = pref ? c.getPreferredSize() : c.getMinimumSize();
+					if (x == 0 || x + cd.width <= maxW) {
+						if (x > 0)
+							x += getHgap();
+						x += cd.width;
+						rowH = Math.max(rowH, cd.height);
+					} else {
+						x = cd.width;
+						y += getVgap() + rowH;
+						rowH = cd.height;
+					}
+					d.width = Math.max(d.width, x);
+				}
+				d.height = y + rowH + getVgap();
+				return d;
+			}
+		}
+	}
 }
