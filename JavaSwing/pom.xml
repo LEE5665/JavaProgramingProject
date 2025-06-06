@@ -97,5 +97,30 @@
 			<artifactId>LGoodDatePicker</artifactId>
 			<version>11.2.1</version>
 		</dependency>
+        <dependency>
+            <groupId>com.github.lgooddatepicker</groupId>
+            <artifactId>LGoodDatePicker</artifactId>
+            <version>11.2.1</version>
+        </dependency>
+        <dependency>
+            <groupId>com.github.jiconfont</groupId>
+            <artifactId>jiconfont</artifactId>
+            <version>1.0.0</version>
+        </dependency>
+        <dependency>
+            <groupId>com.github.jiconfont</groupId>
+            <artifactId>jiconfont-swing</artifactId>
+            <version>1.0.1</version>
+        </dependency>
+        <dependency>
+            <groupId>com.github.jiconfont</groupId>
+            <artifactId>jiconfont-font_awesome</artifactId>
+            <version>4.7.0.1</version>
+        </dependency>
+		<dependency>
+		    <groupId>org.pushing-pixels</groupId>
+		    <artifactId>radiance-animation</artifactId>
+		    <version>8.0.0</version>
+		</dependency>
 	</dependencies>
 </project>
