@@ -47,7 +47,7 @@ public class RegisterPanel extends JPanel {
 			boolean success = UserDAO.registerUser(username, password);
 			if (success) {
 				JOptionPane.showMessageDialog(this, "등록 성공! 로그인 페이지로 이동합니다.", "성공", JOptionPane.INFORMATION_MESSAGE);
-				parentFrame.setContentPane(new LoginPanel(parentFrame));
+				parentFrame.setMainContentPanel(new LoginPanel(parentFrame));
 				parentFrame.revalidate();
 			} else {
 				JOptionPane.showMessageDialog(this, "등록 실패 (아이디 중복 혹은 오류)", "오류", JOptionPane.ERROR_MESSAGE);
