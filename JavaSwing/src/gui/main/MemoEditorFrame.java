@@ -33,6 +33,7 @@ import javax.swing.text.StyledEditorKit;
 import javax.swing.text.html.HTML;
 import javax.swing.text.html.HTMLDocument;
 import javax.swing.text.html.HTMLEditorKit;
+import javax.swing.text.html.StyleSheet;
 
 public class MemoEditorFrame extends JDialog {
 	private final JEditorPane editor;
@@ -58,10 +59,30 @@ public class MemoEditorFrame extends JDialog {
 		// HTML 에디터 설정
 		editor = new JEditorPane();
 		editor.setContentType("text/html");
-		editor.setText(initialHtml != null && !initialHtml.isBlank() ? initialHtml : "<html><body></body></html>");
-		editor.setEditable(true);
 		editor.putClientProperty(JEditorPane.HONOR_DISPLAY_PROPERTIES, Boolean.TRUE);
 		editor.setFont(new Font("Malgun Gothic", Font.PLAIN, 12));
+
+		// HTML 에디터 스타일 설정
+		HTMLEditorKit kit = (HTMLEditorKit) editor.getEditorKit();
+		StyleSheet styleSheet = kit.getStyleSheet();
+		styleSheet.addRule("body { font-family: 'Malgun Gothic', sans-serif; font-size: 12px; margin: 10px; }");
+		styleSheet.addRule("p { margin: 0 0 10px 0; }");
+		styleSheet.addRule("img { display: block; margin: 5px 0; }"); // 이미지 스타일 추가
+		styleSheet.addRule("pre { margin: 0; white-space: pre-wrap; }"); // pre 태그 스타일 추가
+
+		// 초기 HTML 설정 (줄바꿈 처리 추가)
+		String processedHtml = initialHtml;
+		if (processedHtml != null && !processedHtml.isBlank()) {
+			if (!processedHtml.toLowerCase().contains("<html")) {
+				// 일반 텍스트인 경우 HTML로 변환
+				processedHtml = "<html><body><pre>" + processedHtml + "</pre></body></html>";
+			}
+		} else {
+			processedHtml = "<html><body><pre></pre></body></html>";
+		}
+
+		editor.setText(processedHtml);
+		editor.setEditable(true);
 
 		// 툴바 생성
 		JToolBar toolbar = createToolbar();
@@ -207,7 +228,11 @@ public class MemoEditorFrame extends JDialog {
 
 			HTMLDocument doc = (HTMLDocument) editor.getDocument();
 			HTMLEditorKit kit = (HTMLEditorKit) editor.getEditorKit();
-			String imgTag = String.format("<img src=\"%s\" width=\"%d\" height=\"%d\" style=\"display: block; margin: 5px 0;\"/>", uri, w, h);
+
+			// CSS 스타일 대신 HTML 속성 사용
+			String imgTag = String.format(
+					"<img src=\"%s\" width=\"%d\" height=\"%d\" align=\"left\" hspace=\"0\" vspace=\"5\" />", uri, w,
+					h);
 			kit.insertHTML(doc, editor.getCaretPosition(), imgTag, 0, 0, HTML.Tag.IMG);
 
 			editor.revalidate();
@@ -220,10 +245,10 @@ public class MemoEditorFrame extends JDialog {
 
 	private void saveAndClose() {
 		String html = editor.getText();
-		
+
 		// 제거된 이미지 파일 삭제
 		imgHandler.deleteRemovedImages(initialHtml, html);
-		
+
 		onSave.accept(html);
 		dispose();
 	}

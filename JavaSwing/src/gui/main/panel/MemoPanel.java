@@ -19,9 +19,9 @@ import javax.swing.border.EmptyBorder;
 
 import api.model.Memo;
 import api.model.MemoDAO;
-import gui.main.FileSystemImageHandler;
 import gui.main.MemoEditorFrame;
 import gui.main.MemoViewerFrame;
+import gui.main.FileSystemImageHandler;
 
 public class MemoPanel extends JPanel {
 	private JPanel listPanel;
@@ -108,7 +108,7 @@ public class MemoPanel extends JPanel {
 								try {
 									// 열린 뷰어가 있으면 닫기
 									closeViewer(memo.getId());
-
+									
 									// 메모 삭제 전 이미지 파일 삭제
 									try {
 										FileSystemImageHandler imgHandler = new FileSystemImageHandler();
@@ -116,7 +116,7 @@ public class MemoPanel extends JPanel {
 									} catch (Exception imgEx) {
 										imgEx.printStackTrace();
 									}
-
+									
 									memoDAO.deleteMemo(memo.getId());
 									reloadMemos();
 								} catch (Exception ex) {
@@ -339,3 +339,4 @@ public class MemoPanel extends JPanel {
 		}
 	}
 }
+
