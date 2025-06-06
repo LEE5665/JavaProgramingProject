@@ -30,7 +30,7 @@ public class LoginLogoutFrame extends JFrame {
 
 	public LoginLogoutFrame() {
 		setDefaultCloseOperation(EXIT_ON_CLOSE);
-		setSize(1000, 600);
+		setSize(700, 450);
 		setLocationRelativeTo(null);
 		setTitle("일정 관리");
 		setLayout(new BorderLayout());

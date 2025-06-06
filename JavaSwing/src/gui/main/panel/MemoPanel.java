@@ -28,6 +28,7 @@ import javax.swing.border.LineBorder;
 import org.pushingpixels.radiance.animation.api.Timeline;
 import org.pushingpixels.radiance.animation.api.Timeline.TimelineState;
 import org.pushingpixels.radiance.animation.api.callback.TimelineCallbackAdapter;
+import org.pushingpixels.radiance.animation.api.ease.Spline;
 
 import api.model.Memo;
 import api.model.MemoDAO;
@@ -135,7 +136,7 @@ public class MemoPanel extends JPanel {
 
 		Timeline.builder(ghost).addPropertyToInterpolate("alpha", 1f, 0f)
 				.addPropertyToInterpolate("animY", start.y, start.y + 20).setDuration(350)
-				.addCallback(new TimelineCallbackAdapter() {
+				.setEase(new Spline(0.4f, 0f, 0.2f, 1f)).addCallback(new TimelineCallbackAdapter() {
 					@Override
 					public void onTimelineStateChanged(TimelineState oldState, TimelineState newState, float v1,
 							float v2) {
@@ -228,7 +229,7 @@ public class MemoPanel extends JPanel {
 		}, () -> editMemo(m), () -> {
 			Timeline.builder(holder[0]).addPropertyToInterpolate("alpha", 1f, 0f)
 					.addPropertyToInterpolate("animBounds", end, start).setDuration(300)
-					.addCallback(new TimelineCallbackAdapter() {
+					.setEase(new Spline(0.42f, 0f, 0.58f, 1f)).addCallback(new TimelineCallbackAdapter() {
 						@Override
 						public void onTimelineStateChanged(TimelineState o, TimelineState n, float a, float b) {
 							if (n == TimelineState.DONE) {
@@ -245,7 +246,8 @@ public class MemoPanel extends JPanel {
 		glass.add(holder[0]);
 
 		Timeline.builder(holder[0]).addPropertyToInterpolate("alpha", 0f, 1f)
-				.addPropertyToInterpolate("animBounds", start, end).setDuration(350).build().play();
+				.setEase(new Spline(0.55f, 0.06f, 0.68f, 0.19f)).addPropertyToInterpolate("animBounds", start, end)
+				.setDuration(350).build().play();
 	}
 
 	/* ───────── GhostPanel ───────── */
