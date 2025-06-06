@@ -21,6 +21,7 @@ import net.miginfocom.swing.MigLayout;
 public class RegisterPanel extends JPanel {
 	public RegisterPanel(LoginLogoutFrame parentFrame) {
 		super(new MigLayout("align center center"));
+
 		JPanel panel = new JPanel(new MigLayout("wrap 1", "[350!]"));
 		panel.setBorder(BorderFactory.createEmptyBorder(30, 30, 30, 30));
 
@@ -47,8 +48,7 @@ public class RegisterPanel extends JPanel {
 			boolean success = UserDAO.registerUser(username, password);
 			if (success) {
 				JOptionPane.showMessageDialog(this, "등록 성공! 로그인 페이지로 이동합니다.", "성공", JOptionPane.INFORMATION_MESSAGE);
-				parentFrame.setContentPane(new LoginPanel(parentFrame));
-				parentFrame.revalidate();
+				parentFrame.setMainContentPanel(new LoginPanel(parentFrame));
 			} else {
 				JOptionPane.showMessageDialog(this, "등록 실패 (아이디 중복 혹은 오류)", "오류", JOptionPane.ERROR_MESSAGE);
 			}
@@ -81,7 +81,6 @@ public class RegisterPanel extends JPanel {
 			@Override
 			public void mouseClicked(java.awt.event.MouseEvent e) {
 				parentFrame.setMainContentPanel(new LoginPanel(parentFrame));
-				parentFrame.revalidate();
 			}
 		});
 
