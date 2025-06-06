@@ -12,7 +12,8 @@ import api.DB;
 
 public class MemoDAO {
 
-	public int insertMemo(Memo memo) throws SQLException {
+	// 메모 추가
+	public static int insertMemo(Memo memo) throws SQLException {
 		String sql = "INSERT INTO memo (user_id, content, fix_flag, seq, update_at, created_at) VALUES (?, ?, ?, ?, ?, ?)";
 		try (Connection conn = DB.getConnection();
 				PreparedStatement ps = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
@@ -31,7 +32,8 @@ public class MemoDAO {
 		return -1;
 	}
 
-	public List<Memo> selectMemosByUser(int userId) throws SQLException {
+	// 메모 목록 리스트로 반환
+	public static List<Memo> selectMemosByUser(int userId) throws SQLException {
 		String sql = "SELECT * FROM memo WHERE user_id=? ORDER BY fix_flag DESC, update_at DESC, id DESC";
 		List<Memo> result = new ArrayList<>();
 		try (Connection conn = DB.getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
@@ -48,7 +50,8 @@ public class MemoDAO {
 		return result;
 	}
 
-	public boolean updateMemo(Memo memo) throws SQLException {
+	// 메모 내용 수정
+	public static boolean updateMemo(Memo memo) throws SQLException {
 		String sql = "UPDATE memo SET content = ?, fix_flag = ?, seq = ?, update_at = datetime('now','localtime') WHERE id = ?";
 
 		try (Connection conn = DB.getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
@@ -61,7 +64,8 @@ public class MemoDAO {
 		}
 	}
 
-	public boolean deleteMemo(int memoId) throws SQLException {
+	// 메모 제거
+	public static boolean deleteMemo(int memoId) throws SQLException {
 		String sql = "DELETE FROM memo WHERE id=?";
 		try (Connection conn = DB.getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
 			ps.setInt(1, memoId);

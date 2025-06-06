@@ -8,22 +8,18 @@ public class Todo {
     private String title;
     private String startDate;
     private String endDate;
-    private int completed;
-    private int seq;
     private String createdAt;
     private String updatedAt;
 
     public Todo() {}
 
     public Todo(int id, int userId, String title, String startDate, String endDate,
-                int completed, int seq, String createdAt, String updatedAt) {
+                String createdAt, String updatedAt) {
         this.id = id;
         this.userId = userId;
         this.title = title;
         this.startDate = startDate;
         this.endDate = endDate;
-        this.completed = completed;
-        this.seq = seq;
         this.createdAt = createdAt;
         this.updatedAt = updatedAt;
     }
@@ -35,7 +31,6 @@ public class Todo {
         this.endDate = date.toString();
     }
 
-    
     public int getId() { return id; }
     public void setId(int id) { this.id = id; }
 
@@ -50,12 +45,6 @@ public class Todo {
 
     public String getEndDate() { return endDate; }
     public void setEndDate(String endDate) { this.endDate = endDate; }
-
-    public int getCompleted() { return completed; }
-    public void setCompleted(int completed) { this.completed = completed; }
-
-    public int getSeq() { return seq; }
-    public void setSeq(int seq) { this.seq = seq; }
 
     public String getCreatedAt() { return createdAt; }
     public void setCreatedAt(String createdAt) { this.createdAt = createdAt; }

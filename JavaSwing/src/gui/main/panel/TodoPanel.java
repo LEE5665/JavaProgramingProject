@@ -38,9 +38,6 @@ public class TodoPanel extends JPanel {
 	private JScrollPane todoScrollPane;
 
 	private static final DateTimeFormatter DATE_FORMAT = DateTimeFormatter.ofPattern("yyyy-MM-dd");
-
-	private final TodoDAO dao = new TodoDAO();
-
 	public TodoPanel(int userId) {
 		this.userId = userId;
 		setLayout(new MigLayout("insets 0, fill", "[240!][grow,fill]", "[grow,fill]"));
@@ -151,7 +148,7 @@ public class TodoPanel extends JPanel {
 
 		List<Todo> todos;
 		try {
-			todos = dao.listByDate(userId, selDate);
+			todos = TodoDAO.listByDate(userId, selDate);
 		} catch (Exception e) {
 			todos = List.of();
 			todoListPanel.add(new JLabel("DB 오류: " + e.getMessage()));
@@ -174,14 +171,13 @@ public class TodoPanel extends JPanel {
 			for (Todo todo : todos) {
 				TodoItemPanel panel = new TodoItemPanel(todo, () -> {
 					try {
-						dao.toggleCompleted(todo.getId(), todo.getCompleted() == 0);
 						reloadTodos();
 					} catch (Exception ex) {
 						ex.printStackTrace();
 					}
 				}, () -> openTodoEditor(todo), () -> {
 					try {
-						dao.deleteTodo(todo.getId());
+						TodoDAO.deleteTodo(todo.getId());
 						reloadTodos();
 					} catch (Exception ex) {
 						ex.printStackTrace();
@@ -205,7 +201,7 @@ public class TodoPanel extends JPanel {
 		String searchType = (String) searchTypeCombo.getSelectedItem();
 		List<Todo> todos;
 		try {
-			todos = dao.listAll(userId).stream().filter(todo -> {
+			todos = TodoDAO.listAll(userId).stream().filter(todo -> {
 				boolean inTitle = todo.getTitle().toLowerCase().contains(keyword);
 				boolean inContent = CheckItemDAO.listByTodo(todo.getId()).stream()
 						.anyMatch(item -> item.getContent().toLowerCase().contains(keyword));
@@ -237,14 +233,13 @@ public class TodoPanel extends JPanel {
 			for (Todo todo : todos) {
 				TodoItemPanel panel = new TodoItemPanel(todo, () -> {
 					try {
-						dao.toggleCompleted(todo.getId(), todo.getCompleted() == 0);
 						reloadTodosByTitle();
 					} catch (Exception ex) {
 						ex.printStackTrace();
 					}
 				}, () -> openTodoEditor(todo), () -> {
 					try {
-						dao.deleteTodo(todo.getId());
+						TodoDAO.deleteTodo(todo.getId());
 						reloadTodosByTitle();
 					} catch (Exception ex) {
 						ex.printStackTrace();
@@ -271,13 +266,12 @@ public class TodoPanel extends JPanel {
 					newTodo.setTitle(title);
 					newTodo.setStartDate(start);
 					newTodo.setEndDate(end);
-					newTodo.setCompleted(0);
-					dao.insertTodo(newTodo);
+					TodoDAO.insertTodo(newTodo);
 				} else {
 					todo.setTitle(title);
 					todo.setStartDate(start);
 					todo.setEndDate(end);
-					dao.updateTodo(todo);
+					TodoDAO.updateTodo(todo);
 				}
 				reloadTodos();
 			} catch (Exception e) {

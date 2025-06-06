@@ -27,9 +27,6 @@ public class MemoPanel extends JPanel {
 	private JPanel listPanel;
 	private JScrollPane scrollPane;
 	private int userId;
-
-	private final MemoDAO memoDAO = new MemoDAO();
-
 	// 열린 메모 창을 관리하는 맵 (메모 ID -> 메모 뷰어 창)
 	private final Map<Integer, MemoViewerFrame> openViewers = new HashMap<>();
 
@@ -73,7 +70,7 @@ public class MemoPanel extends JPanel {
 							memo.setCreatedAt(null);
 							int id = -1;
 							try {
-								id = memoDAO.insertMemo(memo);
+								id = MemoDAO.insertMemo(memo);
 							} catch (Exception ex) {
 								ex.printStackTrace();
 							}
@@ -93,7 +90,7 @@ public class MemoPanel extends JPanel {
 		listPanel.removeAll();
 		List<Memo> memos = null;
 		try {
-			memos = memoDAO.selectMemosByUser(userId);
+			memos = MemoDAO.selectMemosByUser(userId);
 		} catch (Exception ex) {
 			ex.printStackTrace();
 			memos = List.of();
@@ -117,7 +114,7 @@ public class MemoPanel extends JPanel {
 										imgEx.printStackTrace();
 									}
 									
-									memoDAO.deleteMemo(memo.getId());
+									MemoDAO.deleteMemo(memo.getId());
 									reloadMemos();
 								} catch (Exception ex) {
 									ex.printStackTrace();
@@ -135,7 +132,7 @@ public class MemoPanel extends JPanel {
 										try {
 											if (updated != null) {
 												memo.setContent(updated);
-												memoDAO.updateMemo(memo);
+												MemoDAO.updateMemo(memo);
 
 												// 열린 뷰어가 있으면 내용 업데이트
 												updateViewer(memo);
@@ -154,7 +151,7 @@ public class MemoPanel extends JPanel {
 					() -> {
 						try {
 							memo.setFixFlag(!memo.isFixFlag());
-							memoDAO.updateMemo(memo);
+							MemoDAO.updateMemo(memo);
 							reloadMemos();
 						} catch (Exception ex) {
 							ex.printStackTrace();
@@ -194,7 +191,7 @@ public class MemoPanel extends JPanel {
 									try {
 										if (updated != null) {
 											editMemo.setContent(updated);
-											memoDAO.updateMemo(editMemo);
+											MemoDAO.updateMemo(editMemo);
 
 											// 열린 뷰어 내용 업데이트
 											updateViewer(editMemo);

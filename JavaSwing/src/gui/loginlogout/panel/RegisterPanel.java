@@ -37,7 +37,7 @@ public class RegisterPanel extends JPanel {
 		txtPw.putClientProperty("JTextField.placeholderText", "비밀번호 입력");
 
 		JButton btnRegister = new JButton("등록");
-		Runnable doRegister = () -> {
+		Runnable doRegister = () -> { // 회원가입 함수
 			String username = txtId.getText().trim();
 			String password = new String(txtPw.getPassword());
 			if (username.isEmpty() || password.isEmpty()) {
@@ -55,24 +55,7 @@ public class RegisterPanel extends JPanel {
 		};
 		btnRegister.addActionListener(e -> doRegister.run());
 
-		txtId.addKeyListener(new KeyAdapter() {
-			@Override
-			public void keyPressed(KeyEvent e) {
-				if (e.getKeyCode() == KeyEvent.VK_ENTER) {
-					txtPw.requestFocusInWindow();
-				}
-			}
-		});
-		txtPw.addKeyListener(new KeyAdapter() {
-			@Override
-			public void keyPressed(KeyEvent e) {
-				if (e.getKeyCode() == KeyEvent.VK_ENTER) {
-					doRegister.run();
-				}
-			}
-		});
-
-		SwingUtilities.invokeLater(() -> parentFrame.getRootPane().setDefaultButton(btnRegister));
+		SwingUtilities.invokeLater(() -> parentFrame.getRootPane().setDefaultButton(btnRegister)); // 엔터 클릭 시 회원가입 실행
 
 		JLabel backText = new JLabel(
 				"<html><div style='text-align: center;'>돌아가시겠습니까? <a href='#'>로그인</a></div></html>");

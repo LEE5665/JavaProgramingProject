@@ -40,11 +40,8 @@ public class LoginLogoutFrame extends JFrame {
 		contentPanel = new LoginPanel(this);
 		getContentPane().add(contentPanel, BorderLayout.CENTER);
 	}
-
-	/** 상단에 테마 토글 버튼 추가 */
-	private void addThemeToggleButton() {
-		IconFontSwing.register(FontAwesome.getIconFont());
-
+	
+	private void addThemeToggleButton() { // 상단 토글 버튼
 		Preferences prefs = Preferences.userRoot().node("MyAppPrefs");
 		boolean dark = prefs.getBoolean("darkMode", false);
 
@@ -55,7 +52,6 @@ public class LoginLogoutFrame extends JFrame {
 		themeToggle.setSelected(dark);
 		themeToggle.setPreferredSize(new Dimension(50, 30));
 		themeToggle.setFocusPainted(false);
-		themeToggle.setContentAreaFilled(true);
 
 		// 경계선 스타일 설정
 		Color borderColor = dark ? new Color(80, 80, 80) : new Color(200, 200, 200);
@@ -68,7 +64,7 @@ public class LoginLogoutFrame extends JFrame {
 			prefs.putBoolean("darkMode", isDark);
 			try {
 				UIManager.setLookAndFeel(isDark ? DARK : LIGHT);
-				SwingUtilities.updateComponentTreeUI(this);
+				SwingUtilities.updateComponentTreeUI(this); // 테마 갱신
 			} catch (Exception ex) {
 				ex.printStackTrace();
 			}
@@ -90,7 +86,7 @@ public class LoginLogoutFrame extends JFrame {
 		getContentPane().add(topPanel, BorderLayout.NORTH);
 	}
 
-	/** 중앙 contentPanel 교체 */
+	// 패널 교체
 	public void setMainContentPanel(JPanel newPanel) {
 		getContentPane().remove(contentPanel);
 		contentPanel = newPanel;
@@ -99,7 +95,6 @@ public class LoginLogoutFrame extends JFrame {
 		getContentPane().repaint();
 	}
 
-	/** main */
 	public static void main(String[] args) {
 		Preferences prefs = Preferences.userRoot().node("MyAppPrefs");
 		boolean dark = prefs.getBoolean("darkMode", false);
