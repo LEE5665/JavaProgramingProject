@@ -208,6 +208,7 @@ public class MemoPanel extends JPanel {
         }
     }
 
+    // FlowLayout 자동 줄 바꿈
     public static class WrapLayout extends FlowLayout {
         public WrapLayout(int align, int hgap, int vgap) {
             super(align, hgap, vgap);

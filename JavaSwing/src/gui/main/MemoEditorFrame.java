@@ -55,6 +55,18 @@ public class MemoEditorFrame extends JDialog {
         styleSheet.addRule("p { margin: 0 0 10px 0; }");
         styleSheet.addRule("img { display: block; margin: 5px 0; }");
         styleSheet.addRule("pre { margin: 0; white-space: pre-wrap; }");
+        
+     // 초기 HTML 설정 (줄바꿈 처리 추가)
+     		String processedHtml = "";
+     		if (processedHtml != null && !processedHtml.isBlank()) {
+     			if (!processedHtml.toLowerCase().contains("<html")) {
+     				// 일반 텍스트인 경우 HTML로 변환
+     				processedHtml = "<html><body><pre>" + processedHtml + "</pre></body></html>";
+     			}
+     		} else {
+     			processedHtml = "<html><body><pre></pre></body></html>";
+     		}
+     		editor.setText(processedHtml);
 
         // Toolbar (수정 모드에서만 보임)
         toolbar = createToolbar();
@@ -77,16 +89,6 @@ public class MemoEditorFrame extends JDialog {
         add(btnPanel, BorderLayout.SOUTH);
 
         setMode(editMode); // 초기 모드 설정
-
-        // 창이 뜰 때 포커스 요청
-        addWindowListener(new WindowAdapter() {
-            @Override
-            public void windowOpened(WindowEvent e) {
-                if (MemoEditorFrame.this.editMode) {
-                    editor.requestFocusInWindow();
-                }
-            }
-        });
     }
 
     public void setMode(boolean editMode) {
@@ -242,6 +244,7 @@ public class MemoEditorFrame extends JDialog {
 
             editor.revalidate();
             editor.repaint();
+            editor.setText(editor.getText());
         } catch (Exception ex) {
             ex.printStackTrace();
             JOptionPane.showMessageDialog(this, "이미지를 삽입하는 중 오류: " + ex.getMessage(), "오류", JOptionPane.ERROR_MESSAGE);
