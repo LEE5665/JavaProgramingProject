@@ -36,9 +36,10 @@ public class DB {
 					+ " username TEXT UNIQUE NOT NULL," + " password TEXT NOT NULL" + ")");
 
 			stmt.execute("CREATE TABLE IF NOT EXISTS memo (" + " id INTEGER PRIMARY KEY AUTOINCREMENT,"
-					+ " user_id INTEGER NOT NULL," + " content TEXT," + " fix_flag BOOLEAN DEFAULT 0,"
-					+ " seq INTEGER DEFAULT 0," + " update_at TEXT," + " created_at TEXT,"
-					+ " FOREIGN KEY(user_id) REFERENCES users(id)" + ")");
+				    + " user_id INTEGER NOT NULL," + " content TEXT," + " fix_flag BOOLEAN DEFAULT 0,"
+				    + " update_at TEXT DEFAULT (datetime('now','localtime')),"
+				    + " created_at TEXT DEFAULT (datetime('now','localtime')),"
+				    + " FOREIGN KEY(user_id) REFERENCES users(id)" + ")");
 
 			stmt.execute("CREATE TABLE IF NOT EXISTS todo (" + " id INTEGER PRIMARY KEY AUTOINCREMENT,"
 					+ " user_id INTEGER NOT NULL," + " title TEXT NOT NULL," + " start_date TEXT NOT NULL,"
