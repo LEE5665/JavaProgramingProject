@@ -55,18 +55,6 @@ public class MemoEditorFrame extends JDialog {
         styleSheet.addRule("p { margin: 0 0 10px 0; }");
         styleSheet.addRule("img { display: block; margin: 5px 0; }");
         styleSheet.addRule("pre { margin: 0; white-space: pre-wrap; }");
-        
-     // 초기 HTML 설정 (줄바꿈 처리 추가)
-     		String processedHtml = "";
-     		if (processedHtml != null && !processedHtml.isBlank()) {
-     			if (!processedHtml.toLowerCase().contains("<html")) {
-     				// 일반 텍스트인 경우 HTML로 변환
-     				processedHtml = "<html><body><pre>" + processedHtml + "</pre></body></html>";
-     			}
-     		} else {
-     			processedHtml = "<html><body><pre></pre></body></html>";
-     		}
-     		editor.setText(processedHtml);
 
         // Toolbar (수정 모드에서만 보임)
         toolbar = createToolbar();
@@ -127,14 +115,15 @@ public class MemoEditorFrame extends JDialog {
 
     // HTML 세팅 유틸
     private void setEditorText(String html) {
-        if (html == null || html.isBlank()) {
-            editor.setText("<html><body></body></html>");
-        } else if (!html.toLowerCase().contains("<html")) {
-            editor.setText("<html><body><pre>" + html + "</pre></body></html>");
-        } else {
-            editor.setText(html);
-        }
-        editor.setCaretPosition(0);
+    	String processedHtml = html;
+ 		if (processedHtml != null && !processedHtml.isBlank()) {
+ 			if (!processedHtml.toLowerCase().contains("<html")) {
+ 				processedHtml = "<html><body><pre>" + processedHtml + "</pre></body></html>";
+ 			}
+ 		} else {
+ 			processedHtml = "<html><body><pre></pre></body></html>";
+ 		}
+ 		editor.setText(processedHtml);
     }
 
     private JToolBar createToolbar() {
