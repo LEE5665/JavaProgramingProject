@@ -2,7 +2,6 @@ package gui.main;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
-import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.Font;
 import java.awt.GraphicsEnvironment;
@@ -29,7 +28,6 @@ import javax.swing.JScrollPane;
 import javax.swing.JToolBar;
 import javax.swing.SwingUtilities;
 import javax.swing.text.AttributeSet;
-import javax.swing.text.BadLocationException;
 import javax.swing.text.MutableAttributeSet;
 import javax.swing.text.SimpleAttributeSet;
 import javax.swing.text.StyleConstants;
@@ -51,11 +49,6 @@ public class MemoEditorFrame extends JDialog {
 	private JToolBar toolbar;
 	private JButton saveButton, closeButton, editButton;
 	private FileSystemImageHandler imgHandler;
-	private JComboBox<String> fontBox;
-	private JComboBox<Integer> sizeBox;
-	private JButton boldBtn, italicBtn, underlineBtn;
-	private Integer[] sizes = { 8, 9, 10, 11, 12, 14, 16, 18, 20, 24, 28, 32, 36, 48, 72 };
-	private boolean updatingUI = false;
 
 	public MemoEditorFrame(Window owner, Memo memo, boolean editMode, boolean isNew, Consumer<String> onSave) {
 		super(owner, "", ModalityType.APPLICATION_MODAL);
@@ -76,28 +69,26 @@ public class MemoEditorFrame extends JDialog {
 
 		editor = new JEditorPane();
 		editor.setContentType("text/html");
-		editor.setFont(new Font("Malgun Gothic", Font.PLAIN, 12));
+		editor.setFont(new Font("Malgun Gothic", Font.PLAIN, 12)); // 초기 글꼴 설정
 		editor.putClientProperty(JEditorPane.HONOR_DISPLAY_PROPERTIES, Boolean.TRUE);
 		setEditorText(memo.getContent());
 
-		// HTML 스타일 시트 세팅
 		HTMLEditorKit kit = (HTMLEditorKit) editor.getEditorKit();
 		StyleSheet styleSheet = kit.getStyleSheet();
-
-		styleSheet.addRule("body {" + " font-family: 'Malgun Gothic', sans-serif;" + " font-size: 12px;"
-				+ " margin: 10px;" + " white-space: pre-wrap;" + "}");
-		styleSheet.addRule("p {" + " margin: 0 0 10px 0;" + " white-space: pre-wrap;" + "}");
-		styleSheet.addRule("span { white-space: pre-wrap; }");
-		styleSheet.addRule("font { white-space: pre-wrap; }");
-		styleSheet.addRule("div { white-space: pre-wrap; }");
+		// HTML 기본 스타일시트 업데이트: 기본 글꼴 및 크기 설정
+		styleSheet.addRule("body { font-family: 'Malgun Gothic', sans-serif; font-size: 12px; margin: 10px; }");
+		styleSheet.addRule("p { margin: 0 0 10px 0; }");
 		styleSheet.addRule("img { display: block; margin: 5px 0; }");
+		styleSheet.addRule("pre { margin: 0; white-space: pre-wrap; }");
 
+		// Toolbar (수정 모드에서만 보임)
 		toolbar = createToolbar();
 
+		// Buttons (읽기/수정모드에 따라 보임)
 		JPanel btnPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 5));
 		saveButton = createButton("저장", this::saveAndClose);
 		closeButton = createButton("닫기", () -> {
-			onSave.accept(null);
+			onSave.accept(null); // 저장 콜백 없이 닫기
 			dispose();
 		});
 		editButton = createButton("수정", () -> setMode(true));
@@ -110,27 +101,28 @@ public class MemoEditorFrame extends JDialog {
 		add(new JScrollPane(editor), BorderLayout.CENTER);
 		add(btnPanel, BorderLayout.SOUTH);
 
-		editor.addCaretListener(e -> refreshStyleUI());
-
-		setMode(editMode);
-		refreshStyleUI();
+		setMode(editMode); // 초기 모드 설정
 	}
 
 	public void setMode(boolean editMode) {
 		this.editMode = editMode;
 		updateModeUI();
 		updateTitle();
-		if (editMode)
+
+		// 수정 모드에서 창이 이미 떠 있을 때도 포커스
+		if (editMode) {
 			SwingUtilities.invokeLater(() -> editor.requestFocusInWindow());
+		}
 	}
 
 	private void updateTitle() {
-		if (isNew)
+		if (isNew) {
 			setTitle("메모 추가");
-		else if (editMode)
+		} else if (editMode) {
 			setTitle("메모 수정");
-		else
+		} else {
 			setTitle("메모 보기");
+		}
 	}
 
 	private void updateModeUI() {
@@ -138,176 +130,116 @@ public class MemoEditorFrame extends JDialog {
 		editor.setEditable(editMode);
 		saveButton.setVisible(editMode);
 		editButton.setVisible(!editMode && !isNew);
-		if (editMode)
+		closeButton.setVisible(true); // 항상 닫기
+
+		// 수정모드 시 바로 커서 포커스 (윈도우 오픈 후에도 한 번 더 보장)
+		if (editMode) {
 			SwingUtilities.invokeLater(() -> editor.requestFocusInWindow());
+		}
 	}
 
+	// HTML 세팅 유틸
 	private void setEditorText(String html) {
-		String processedHtml;
-		if (html == null || html.isBlank()) {
-			processedHtml = "<html><body></body></html>";
-		} else if (!html.toLowerCase().contains("<html")) {
-			// plain text: HTML 이스케이프
-			String escaped = html.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;");
-			processedHtml = "<html><body>" + escaped + "</body></html>";
+		String processedHtml = html;
+		if (processedHtml != null && !processedHtml.isBlank()) {
+			if (!processedHtml.toLowerCase().contains("<html")) {
+				processedHtml = "<html><body><pre>" + processedHtml + "</pre></body></html>";
+			}
 		} else {
-			// 이미 HTML 마크업 포함
-			processedHtml = html;
+			processedHtml = "<html><body><pre></pre></body></html>";
 		}
 		editor.setText(processedHtml);
 	}
 
 	private JToolBar createToolbar() {
-		JToolBar t = new JToolBar();
-		t.setFloatable(false);
-		boldBtn = createStyleButton("B", "굵게", this::toggleBold);
-		italicBtn = createStyleButton("I", "기울임", this::toggleItalic);
-		underlineBtn = createStyleButton("U", "밑줄", this::toggleUnderline);
-		t.add(boldBtn);
-		t.add(italicBtn);
-		t.add(underlineBtn);
-		t.addSeparator();
-		String[] fam = GraphicsEnvironment.getLocalGraphicsEnvironment().getAvailableFontFamilyNames();
-		fontBox = new JComboBox<>(fam);
-		fontBox.setMaximumSize(new Dimension(160, 24));
-		fontBox.setSelectedItem("Malgun Gothic");
-		fontBox.addActionListener(e -> {
-			if (!updatingUI)
-				changeFontFamily((String) fontBox.getSelectedItem());
+		JToolBar toolbar = new JToolBar();
+		toolbar.setFloatable(false);
+		toolbar.add(createStyleButton("B", "굵게", this::toggleBold));
+		toolbar.add(createStyleButton("I", "기울임", this::toggleItalic));
+		toolbar.add(createStyleButton("U", "밑줄", this::toggleUnderline));
+		toolbar.addSeparator();
+		// 글꼴 선택 콤보박스 추가
+		toolbar.add(createFontFamilyComboBox());
+		// 글꼴 크기 콤보박스 추가
+		toolbar.add(createFontSizeComboBox());
+		toolbar.add(createButton("글자색", this::chooseColor));
+		toolbar.addSeparator();
+		toolbar.add(createButton("이미지 삽입", this::insertImage));
+		return toolbar;
+	}
+
+	private JComboBox<String> createFontFamilyComboBox() {
+		String[] fontNames = GraphicsEnvironment.getLocalGraphicsEnvironment().getAvailableFontFamilyNames();
+		JComboBox<String> fontFamilyBox = new JComboBox<>(fontNames);
+		fontFamilyBox.setSelectedItem("Malgun Gothic"); // 기본 글꼴 설정
+		fontFamilyBox.addActionListener(e -> {
+			String selectedFont = (String) fontFamilyBox.getSelectedItem();
+			setFontFamily(selectedFont);
 		});
-		t.add(fontBox);
-		sizeBox = new JComboBox<>(sizes);
-		sizeBox.setMaximumSize(new Dimension(70, 24));
-		sizeBox.setSelectedItem(12);
-		sizeBox.addActionListener(e -> {
-			if (!updatingUI)
-				changeFontSize((Integer) sizeBox.getSelectedItem());
+		return fontFamilyBox;
+	}
+
+	private JComboBox<Integer> createFontSizeComboBox() {
+		Integer[] fontSizes = { 8, 9, 10, 11, 12, 14, 16, 18, 20, 22, 24, 26, 28, 36, 48, 72 };
+		JComboBox<Integer> fontSizeBox = new JComboBox<>(fontSizes);
+		fontSizeBox.setSelectedItem(12); // 기본 글꼴 크기 설정
+		fontSizeBox.addActionListener(e -> {
+			Integer selectedSize = (Integer) fontSizeBox.getSelectedItem();
+			setFontSize(selectedSize);
 		});
-		t.add(sizeBox);
-		t.addSeparator();
-		t.add(createButton("글자색", this::chooseColor));
-		t.addSeparator();
-		t.add(createButton("이미지 삽입", this::insertImage));
-		return t;
+		return fontSizeBox;
 	}
 
-	private void refreshStyleUI() {
-		updatingUI = true;
-		AttributeSet a = getCharacterAttributes();
-		String fam = StyleConstants.getFontFamily(a);
-		if (fam != null)
-			fontBox.setSelectedItem(fam);
-		int sz = StyleConstants.getFontSize(a);
-		boolean found = false;
-		for (int i = 0; i < sizeBox.getItemCount(); i++)
-			if (sizeBox.getItemAt(i) == sz) {
-				found = true;
-				break;
-			}
-		if (!found)
-			sizeBox.addItem(sz);
-		sizeBox.setSelectedItem(sz);
-		boldBtn.setForeground(StyleConstants.isBold(a) ? Color.BLUE : Color.BLACK);
-		italicBtn.setForeground(StyleConstants.isItalic(a) ? Color.BLUE : Color.BLACK);
-		underlineBtn.setForeground(StyleConstants.isUnderline(a) ? Color.BLUE : Color.BLACK);
-		updatingUI = false;
+	private JButton createButton(String text, Runnable onClick) {
+		JButton button = new JButton(text);
+		button.addActionListener(e -> onClick.run());
+		return button;
 	}
 
-	private void applyCharAttr(AttributeSet attr, boolean replace) {
-		int start = editor.getSelectionStart();
-		int end = editor.getSelectionEnd();
-
-		if (start == end) {
-			StyledEditorKit kit = (StyledEditorKit) editor.getEditorKit();
-			MutableAttributeSet ia = kit.getInputAttributes();
-			if (replace)
-				ia.removeAttributes(ia);
-			ia.addAttributes(attr);
-			return;
-		}
-
-		HTMLDocument doc = (HTMLDocument) editor.getDocument();
-		try {
-			String txt = doc.getText(start, end - start);
-			int run = -1;
-			for (int i = 0; i < txt.length(); i++) {
-				char c = txt.charAt(i);
-				if (c == '\n' || c == '\r') {
-					if (run != -1) {
-						doc.setCharacterAttributes(start + run, i - run, attr, false);
-						run = -1;
-					}
-				} else if (run == -1)
-					run = i;
-			}
-			if (run != -1)
-				doc.setCharacterAttributes(start + run, txt.length() - run, attr, false);
-		} catch (BadLocationException ex) {
-			ex.printStackTrace();
-		}
+	private JButton createStyleButton(String text, String tooltip, Runnable onClick) {
+		JButton button = new JButton(text);
+		button.setToolTipText(tooltip);
+		button.addActionListener(e -> onClick.run());
+		return button;
 	}
 
-	private void changeFontFamily(String f) {
-		MutableAttributeSet a = new SimpleAttributeSet();
-		StyleConstants.setFontFamily(a, f);
-		applyCharAttr(a, false);
-		refreshStyleUI();
-	}
-
-	private void changeFontSize(int s) {
-		MutableAttributeSet a = new SimpleAttributeSet();
-		StyleConstants.setFontSize(a, s);
-		applyCharAttr(a, false);
-		refreshStyleUI();
-	}
-
-	private JButton createButton(String text, Runnable r) {
-		JButton b = new JButton(text);
-		b.addActionListener(e -> r.run());
-		return b;
-	}
-
-	private JButton createStyleButton(String text, String tip, Runnable r) {
-		JButton b = new JButton(text);
-		b.setToolTipText(tip);
-		b.addActionListener(e -> r.run());
-		return b;
-	}
-
+	// 스타일 기능들
 	private void toggleBold() {
-		MutableAttributeSet a = new SimpleAttributeSet();
-		StyleConstants.setBold(a, !StyleConstants.isBold(getCharacterAttributes()));
-		applyCharAttr(a, false);
-		refreshStyleUI();
+		MutableAttributeSet attr = new SimpleAttributeSet();
+		StyleConstants.setBold(attr, !StyleConstants.isBold(getCharacterAttributes()));
+		setCharacterAttributes(attr, false);
 	}
 
 	private void toggleItalic() {
-		MutableAttributeSet a = new SimpleAttributeSet();
-		StyleConstants.setItalic(a, !StyleConstants.isItalic(getCharacterAttributes()));
-		applyCharAttr(a, false);
-		refreshStyleUI();
+		MutableAttributeSet attr = new SimpleAttributeSet();
+		StyleConstants.setItalic(attr, !StyleConstants.isItalic(getCharacterAttributes()));
+		setCharacterAttributes(attr, false);
 	}
 
 	private void toggleUnderline() {
-		MutableAttributeSet a = new SimpleAttributeSet();
-		StyleConstants.setUnderline(a, !StyleConstants.isUnderline(getCharacterAttributes()));
-		applyCharAttr(a, false);
-		refreshStyleUI();
+		MutableAttributeSet attr = new SimpleAttributeSet();
+		StyleConstants.setUnderline(attr, !StyleConstants.isUnderline(getCharacterAttributes()));
+		setCharacterAttributes(attr, false);
 	}
 
-	private void setAlignment(int align) {
-		MutableAttributeSet a = new SimpleAttributeSet();
-		StyleConstants.setAlignment(a, align);
-		setParagraphAttributes(a, false);
+	private void setFontFamily(String fontFamily) {
+		MutableAttributeSet attr = new SimpleAttributeSet();
+		StyleConstants.setFontFamily(attr, fontFamily);
+		setCharacterAttributes(attr, false);
+	}
+
+	private void setFontSize(int fontSize) {
+		MutableAttributeSet attr = new SimpleAttributeSet();
+		StyleConstants.setFontSize(attr, fontSize);
+		setCharacterAttributes(attr, false);
 	}
 
 	private void chooseColor() {
-		Color c = JColorChooser.showDialog(this, "글자색 선택", Color.BLACK);
-		if (c != null) {
-			MutableAttributeSet a = new SimpleAttributeSet();
-			StyleConstants.setForeground(a, c);
-			applyCharAttr(a, false);
-			refreshStyleUI();
+		Color color = JColorChooser.showDialog(this, "글자색 선택", Color.BLACK);
+		if (color != null) {
+			MutableAttributeSet attr = new SimpleAttributeSet();
+			StyleConstants.setForeground(attr, color);
+			setCharacterAttributes(attr, false);
 		}
 	}
 
@@ -316,23 +248,33 @@ public class MemoEditorFrame extends JDialog {
 		return kit.getInputAttributes();
 	}
 
-	private void setParagraphAttributes(AttributeSet attr, boolean replace) {
+	private void setCharacterAttributes(AttributeSet attr, boolean replace) {
 		int start = editor.getSelectionStart();
 		int end = editor.getSelectionEnd();
-		HTMLDocument doc = (HTMLDocument) editor.getDocument();
-		doc.setParagraphAttributes(start, end - start, attr, replace);
+		if (start != end) {
+			HTMLDocument doc = (HTMLDocument) editor.getDocument();
+			doc.setCharacterAttributes(start, end - start, attr, replace);
+		} else {
+			StyledEditorKit kit = (StyledEditorKit) editor.getEditorKit();
+			MutableAttributeSet inputAttributes = kit.getInputAttributes();
+			if (replace)
+				inputAttributes.removeAttributes(inputAttributes);
+			inputAttributes.addAttributes(attr);
+		}
 	}
 
+	// 이미지 삽입
 	private void insertImage() {
-		JFileChooser ch = new JFileChooser();
-		ch.setFileFilter(
+		JFileChooser chooser = new JFileChooser();
+		chooser.setFileFilter(
 				new javax.swing.filechooser.FileNameExtensionFilter("이미지 파일", "png", "jpg", "jpeg", "gif", "bmp"));
-		if (ch.showOpenDialog(this) != JFileChooser.APPROVE_OPTION)
+		if (chooser.showOpenDialog(this) != JFileChooser.APPROVE_OPTION)
 			return;
-		File imgFile = ch.getSelectedFile();
-		ImageIcon prev = new ImageIcon(
+
+		File imgFile = chooser.getSelectedFile();
+		ImageIcon preview = new ImageIcon(
 				new ImageIcon(imgFile.getAbsolutePath()).getImage().getScaledInstance(150, -1, Image.SCALE_SMOOTH));
-		if (JOptionPane.OK_OPTION != JOptionPane.showConfirmDialog(this, new JLabel(prev), "이 이미지 삽입?",
+		if (JOptionPane.OK_OPTION != JOptionPane.showConfirmDialog(this, new JLabel(preview), "이 이미지 삽입?",
 				JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE))
 			return;
 		try {
@@ -340,11 +282,13 @@ public class MemoEditorFrame extends JDialog {
 			Path dest = imgHandler.getImagesDir().resolve(filename);
 			String uri = dest.toUri().toString();
 			BufferedImage stored = ImageIO.read(dest.toFile());
+
 			String imgTag = String.format(
 					"<img src=\"%s\" width=\"100\" height=\"100\" align=\"left\" hspace=\"0\" vspace=\"5\" />", uri);
 			HTMLDocument doc = (HTMLDocument) editor.getDocument();
-			HTMLEditorKit kit2 = (HTMLEditorKit) editor.getEditorKit();
-			kit2.insertHTML(doc, editor.getCaretPosition(), "<br>" + imgTag, 0, 0, HTML.Tag.IMG);
+			HTMLEditorKit kit = (HTMLEditorKit) editor.getEditorKit();
+			kit.insertHTML(doc, editor.getCaretPosition(), "<br>" + imgTag, 0, 0, HTML.Tag.IMG);
+
 			editor.revalidate();
 			editor.repaint();
 			editor.setText(editor.getText());
@@ -354,10 +298,12 @@ public class MemoEditorFrame extends JDialog {
 		}
 	}
 
+	// 저장 및 닫기
 	private void saveAndClose() {
 		String html = editor.getText();
-		if (imgHandler != null)
+		if (imgHandler != null) {
 			imgHandler.deleteRemovedImages(memo.getContent(), html);
+		}
 		onSave.accept(html);
 		dispose();
 	}
