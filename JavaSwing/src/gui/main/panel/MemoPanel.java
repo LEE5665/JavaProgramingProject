@@ -1,9 +1,7 @@
 package gui.main.panel;
 
 import java.awt.*;
-import java.util.*;
 import java.util.List;
-
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import api.model.Memo;
@@ -15,7 +13,6 @@ public class MemoPanel extends JPanel {
     private JPanel listPanel;
     private JScrollPane scrollPane;
     private int userId;
-    private final Map<Integer, MemoEditorFrame> openEditors = new HashMap<>();
 
     public MemoPanel(int userId) {
         this.userId = userId;
@@ -89,7 +86,6 @@ public class MemoPanel extends JPanel {
                     try {
                         cardRef[0].playDeleteAnimation(() -> {
                             try {
-                                closeEditor(memo.getId());
                                 try {
                                     FileSystemImageHandler imgHandler = new FileSystemImageHandler();
                                     imgHandler.deleteImagesInMarkdown(memo.getContent());
@@ -127,14 +123,6 @@ public class MemoPanel extends JPanel {
     }
 
     private void openMemoEditor(Memo memo, boolean editMode) {
-        int memoId = memo.getId();
-        if (memoId != 0 && openEditors.containsKey(memoId)) {
-            MemoEditorFrame frame = openEditors.get(memoId);
-            frame.setMode(editMode);
-            frame.toFront();
-            frame.requestFocus();
-            return;
-        }
         MemoEditorFrame frame = new MemoEditorFrame(
             SwingUtilities.getWindowAncestor(this), memo, editMode, false,
             updated -> {
@@ -149,30 +137,7 @@ public class MemoPanel extends JPanel {
                 }
             }
         );
-        frame.addWindowListener(new java.awt.event.WindowAdapter() {
-            @Override
-            public void windowClosed(java.awt.event.WindowEvent e) {
-                openEditors.remove(memoId);
-            }
-        });
-        if (memoId != 0)
-            openEditors.put(memoId, frame);
         frame.setVisible(true);
-    }
-
-    private void closeEditor(int memoId) {
-        if (openEditors.containsKey(memoId)) {
-            MemoEditorFrame frame = openEditors.get(memoId);
-            frame.dispose();
-            openEditors.remove(memoId);
-        }
-    }
-
-    public void closeAllEditors() {
-        for (MemoEditorFrame frame : openEditors.values()) {
-            frame.dispose();
-        }
-        openEditors.clear();
     }
 
     private void reloadSingleMemoWithAnimation(int targetId) {
@@ -208,19 +173,21 @@ public class MemoPanel extends JPanel {
         }
     }
 
-    // FlowLayout 자동 줄 바꿈
     public static class WrapLayout extends FlowLayout {
         public WrapLayout(int align, int hgap, int vgap) {
             super(align, hgap, vgap);
         }
+
         @Override
         public Dimension preferredLayoutSize(Container target) {
             return layoutSize(target, true);
         }
+
         @Override
         public Dimension minimumLayoutSize(Container target) {
             return layoutSize(target, false);
         }
+
         private Dimension layoutSize(Container target, boolean preferred) {
             synchronized (target.getTreeLock()) {
                 int targetWidth = target.getWidth() > 0 ? target.getWidth() : Integer.MAX_VALUE;
