@@ -84,8 +84,11 @@ public class MainFrame extends JFrame {
 					IconFontSwing.buildIcon(FontAwesome.SUN_O, iconSize, sel ? Color.WHITE : Color.BLACK));
 			themeToggle.setToolTipText(sel ? "다크 모드" : "라이트 모드");
 			SwingUtilities.updateComponentTreeUI(this);
-			memoPanel.updateUI();
-			todoPanel.updateUI();
+
+			// updateUI() 대신 updateTheme() 호출
+			memoPanel.updateTheme();
+			todoPanel.updateUI(); // TodoPanel은 무한 재귀 문제가 없다고 가정
+
 			for (AbstractButton btn : new AbstractButton[] { todoButton, memoButton }) {
 				for (ItemListener il : btn.getItemListeners()) {
 					il.itemStateChanged(new ItemEvent(btn, ItemEvent.ITEM_STATE_CHANGED, btn,

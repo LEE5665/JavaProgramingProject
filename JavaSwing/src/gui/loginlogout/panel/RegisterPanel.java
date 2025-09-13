@@ -21,7 +21,6 @@ import net.miginfocom.swing.MigLayout;
 public class RegisterPanel extends JPanel {
 	public RegisterPanel(LoginLogoutFrame parentFrame) {
 		super(new MigLayout("align center center"));
-
 		JPanel panel = new JPanel(new MigLayout("wrap 1", "[350!]"));
 		panel.setBorder(BorderFactory.createEmptyBorder(30, 30, 30, 30));
 
@@ -38,7 +37,7 @@ public class RegisterPanel extends JPanel {
 		txtPw.putClientProperty("JTextField.placeholderText", "비밀번호 입력");
 
 		JButton btnRegister = new JButton("등록");
-		Runnable doRegister = () -> {
+		Runnable doRegister = () -> { // 회원가입 함수
 			String username = txtId.getText().trim();
 			String password = new String(txtPw.getPassword());
 			if (username.isEmpty() || password.isEmpty()) {
@@ -49,30 +48,14 @@ public class RegisterPanel extends JPanel {
 			if (success) {
 				JOptionPane.showMessageDialog(this, "등록 성공! 로그인 페이지로 이동합니다.", "성공", JOptionPane.INFORMATION_MESSAGE);
 				parentFrame.setMainContentPanel(new LoginPanel(parentFrame));
+				parentFrame.revalidate();
 			} else {
 				JOptionPane.showMessageDialog(this, "등록 실패 (아이디 중복 혹은 오류)", "오류", JOptionPane.ERROR_MESSAGE);
 			}
 		};
 		btnRegister.addActionListener(e -> doRegister.run());
 
-		txtId.addKeyListener(new KeyAdapter() {
-			@Override
-			public void keyPressed(KeyEvent e) {
-				if (e.getKeyCode() == KeyEvent.VK_ENTER) {
-					txtPw.requestFocusInWindow();
-				}
-			}
-		});
-		txtPw.addKeyListener(new KeyAdapter() {
-			@Override
-			public void keyPressed(KeyEvent e) {
-				if (e.getKeyCode() == KeyEvent.VK_ENTER) {
-					doRegister.run();
-				}
-			}
-		});
-
-		SwingUtilities.invokeLater(() -> parentFrame.getRootPane().setDefaultButton(btnRegister));
+		SwingUtilities.invokeLater(() -> parentFrame.getRootPane().setDefaultButton(btnRegister)); // 엔터 클릭 시 회원가입 실행
 
 		JLabel backText = new JLabel(
 				"<html><div style='text-align: center;'>돌아가시겠습니까? <a href='#'>로그인</a></div></html>");
@@ -81,6 +64,7 @@ public class RegisterPanel extends JPanel {
 			@Override
 			public void mouseClicked(java.awt.event.MouseEvent e) {
 				parentFrame.setMainContentPanel(new LoginPanel(parentFrame));
+				parentFrame.revalidate();
 			}
 		});
 

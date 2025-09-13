@@ -38,13 +38,11 @@ public class TodoPanel extends JPanel {
 	private JScrollPane todoScrollPane;
 
 	private static final DateTimeFormatter DATE_FORMAT = DateTimeFormatter.ofPattern("yyyy-MM-dd");
-
-	private final TodoDAO dao = new TodoDAO();
-
 	public TodoPanel(int userId) {
 		this.userId = userId;
 		setLayout(new MigLayout("insets 0, fill", "[240!][grow,fill]", "[grow,fill]"));
 
+		// 왼쪽 설정 패널
 		JPanel leftPanel = new JPanel(new MigLayout("insets 18 14 18 6, wrap 1", "[grow,fill]", ""));
 		JLabel dateLabel = new JLabel("날짜 선택");
 		dateLabel.setFont(new Font("Dialog", Font.BOLD, 15));
@@ -93,6 +91,7 @@ public class TodoPanel extends JPanel {
 
 		leftPanel.add(new JLabel(), "grow, pushy");
 
+		// 오른쪽 설정 패널
 		JPanel rightPanel = new JPanel(
 				new MigLayout("insets 18 4 18 16, wrap 1, fill", "[grow,fill]", "[]8[grow,fill]"));
 		JButton addBtn = new JButton("+ 계획 추가");
@@ -120,9 +119,11 @@ public class TodoPanel extends JPanel {
 
 		addBtn.addActionListener(e -> openTodoEditor(null));
 
+		// Todo 리스트 로딩
 		reloadTodos();
 	}
 
+	// 현재 날짜 기준으로 다음 날짜 설정
 	private void changeDateBy(int days) {
 		try {
 			LocalDate currentDate = LocalDate.parse(dateInputField.getText(), DATE_FORMAT);
@@ -138,6 +139,7 @@ public class TodoPanel extends JPanel {
 		reloadTodos();
 	}
 
+	// 검색 날짜 기준으로 reload
 	private void reloadTodos() {
 		todoListPanel.removeAll();
 		LocalDate selDate;
@@ -148,17 +150,16 @@ public class TodoPanel extends JPanel {
 			refreshPanel();
 			return;
 		}
-
+		// DB에서 todos 리스트로 가져오기
 		List<Todo> todos;
 		try {
-			todos = dao.listByDate(userId, selDate);
+			todos = TodoDAO.listByDate(userId, selDate);
 		} catch (Exception e) {
-			todos = List.of();
 			todoListPanel.add(new JLabel("DB 오류: " + e.getMessage()));
 			refreshPanel();
 			return;
 		}
-
+		// 현재 sort 설정 기준으로 정렬
 		String sort = (String) sortCombo.getSelectedItem();
 		if ("기간 내림차순".equals(sort)) {
 			todos = todos.stream().sorted((a, b) -> b.getStartDate().compareTo(a.getStartDate()))
@@ -167,21 +168,21 @@ public class TodoPanel extends JPanel {
 			todos = todos.stream().sorted((a, b) -> a.getStartDate().compareTo(b.getStartDate()))
 					.collect(Collectors.toList());
 		}
-
+		// 가져왔는데 없으면
 		if (todos.isEmpty()) {
 			todoListPanel.add(new JLabel("해당 날짜에 할 일이 없습니다."));
 		} else {
 			for (Todo todo : todos) {
+				// TodoItemPanel 생성, Runable 생성자 만들어서 넘기기
 				TodoItemPanel panel = new TodoItemPanel(todo, () -> {
 					try {
-						dao.toggleCompleted(todo.getId(), todo.getCompleted() == 0);
 						reloadTodos();
 					} catch (Exception ex) {
 						ex.printStackTrace();
 					}
 				}, () -> openTodoEditor(todo), () -> {
 					try {
-						dao.deleteTodo(todo.getId());
+						TodoDAO.deleteTodo(todo.getId());
 						reloadTodos();
 					} catch (Exception ex) {
 						ex.printStackTrace();
@@ -194,6 +195,7 @@ public class TodoPanel extends JPanel {
 		refreshPanel();
 	}
 
+	// 타이틀, 제목으로 가져오기
 	private void reloadTodosByTitle() {
 		todoListPanel.removeAll();
 		String keyword = searchField.getText().trim().toLowerCase();
@@ -202,10 +204,11 @@ public class TodoPanel extends JPanel {
 			return;
 		}
 
+		// 필터를 통과한 todo 리스트만 모아서 보여줌
 		String searchType = (String) searchTypeCombo.getSelectedItem();
 		List<Todo> todos;
 		try {
-			todos = dao.listAll(userId).stream().filter(todo -> {
+			todos = TodoDAO.listAll(userId).stream().filter(todo -> {
 				boolean inTitle = todo.getTitle().toLowerCase().contains(keyword);
 				boolean inContent = CheckItemDAO.listByTodo(todo.getId()).stream()
 						.anyMatch(item -> item.getContent().toLowerCase().contains(keyword));
@@ -237,14 +240,13 @@ public class TodoPanel extends JPanel {
 			for (Todo todo : todos) {
 				TodoItemPanel panel = new TodoItemPanel(todo, () -> {
 					try {
-						dao.toggleCompleted(todo.getId(), todo.getCompleted() == 0);
 						reloadTodosByTitle();
 					} catch (Exception ex) {
 						ex.printStackTrace();
 					}
 				}, () -> openTodoEditor(todo), () -> {
 					try {
-						dao.deleteTodo(todo.getId());
+						TodoDAO.deleteTodo(todo.getId());
 						reloadTodosByTitle();
 					} catch (Exception ex) {
 						ex.printStackTrace();
@@ -263,6 +265,7 @@ public class TodoPanel extends JPanel {
 	}
 
 	private void openTodoEditor(Todo todo) {
+		// 3가지 인자를 받는 컨슈머에 doSave에 사용 될 함수 정의
 		TodoEditorFrame.TriConsumer<String, LocalDate, LocalDate> onSave = (title, start, end) -> {
 			try {
 				if (todo == null) {
@@ -271,13 +274,12 @@ public class TodoPanel extends JPanel {
 					newTodo.setTitle(title);
 					newTodo.setStartDate(start);
 					newTodo.setEndDate(end);
-					newTodo.setCompleted(0);
-					dao.insertTodo(newTodo);
+					TodoDAO.insertTodo(newTodo);
 				} else {
 					todo.setTitle(title);
 					todo.setStartDate(start);
 					todo.setEndDate(end);
-					dao.updateTodo(todo);
+					TodoDAO.updateTodo(todo);
 				}
 				reloadTodos();
 			} catch (Exception e) {

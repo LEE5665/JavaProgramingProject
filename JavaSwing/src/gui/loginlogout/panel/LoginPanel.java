@@ -24,7 +24,7 @@ import gui.main.MainFrame;
 import net.miginfocom.swing.MigLayout;
 
 public class LoginPanel extends JPanel {
-	private static final Preferences PREFS = Preferences.userRoot().node("MyAppPrefs");
+	private static final Preferences PREFS = Preferences.userRoot().node("MyAppPrefs"); // 로컬 저장소 사용
 
 	public LoginPanel(LoginLogoutFrame parentFrame) {
 		super(new MigLayout("align center center"));
@@ -32,7 +32,7 @@ public class LoginPanel extends JPanel {
 		JPanel panel = new JPanel(new MigLayout("wrap 1", "[350!]"));
 		panel.setBorder(BorderFactory.createEmptyBorder(0, 30, 30, 30));
 
-		JLabel title = new JLabel("일정 관리");
+		JLabel title = new JLabel("로그인");
 		title.setFont(new Font("Dialog", Font.BOLD, 20));
 		panel.add(title, "gapbottom 5, center");
 
@@ -52,7 +52,7 @@ public class LoginPanel extends JPanel {
 		rememberMe.setSelected(remembered);
 
 		JButton btnLogin = new JButton("로그인");
-		Runnable doLogin = () -> {
+		Runnable doLogin = () -> { // 로그인 함수
 			String username = txtUser.getText().trim();
 			String password = new String(txtPass.getPassword());
 			int userId = UserDAO.login(username, password);
@@ -65,33 +65,18 @@ public class LoginPanel extends JPanel {
 				}
 				MainFrame todosFrame = new MainFrame(userId);
 				todosFrame.setVisible(true);
-				SwingUtilities.getWindowAncestor(btnLogin).dispose();
+				SwingUtilities.getWindowAncestor(btnLogin).dispose(); // 로그인 창 최상위 객체 제거
 			} else {
 				JOptionPane.showMessageDialog(this, "로그인 실패! 아이디 또는 비밀번호를 확인하세요.");
 			}
 		};
 		btnLogin.addActionListener(e -> doLogin.run());
 
-		txtUser.addKeyListener(new KeyAdapter() {
-			@Override
-			public void keyPressed(KeyEvent e) {
-				if (e.getKeyCode() == KeyEvent.VK_ENTER)
-					txtPass.requestFocusInWindow();
-			}
-		});
-		txtPass.addKeyListener(new KeyAdapter() {
-			@Override
-			public void keyPressed(KeyEvent e) {
-				if (e.getKeyCode() == KeyEvent.VK_ENTER)
-					doLogin.run();
-			}
-		});
-
-		SwingUtilities.invokeLater(() -> parentFrame.getRootPane().setDefaultButton(btnLogin));
+		SwingUtilities.invokeLater(() -> parentFrame.getRootPane().setDefaultButton(btnLogin)); // 엔터 클릭 시 로그인 실행
 
 		JLabel signupText = new JLabel(
 				"<html><div style='text-align: center;'>아이디를 등록해야 합니다 <a href='#'>사용자 등록</a></div></html>");
-		signupText.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+		signupText.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR)); // 커서 모양 변경
 		signupText.addMouseListener(new java.awt.event.MouseAdapter() {
 			@Override
 			public void mouseClicked(java.awt.event.MouseEvent e) {
@@ -111,7 +96,7 @@ public class LoginPanel extends JPanel {
 		add(panel);
 	}
 
-	private void applyLookAndFeel(boolean dark) {
+	private void applyLookAndFeel(boolean dark) { // 테마 적용
 		try {
 			if (dark) {
 				UIManager.setLookAndFeel(LoginLogoutFrame.DARK);

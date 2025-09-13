@@ -7,7 +7,7 @@ import java.sql.*;
 
 public class UserDAO {
 
-    
+    // 회원가입
     public static boolean registerUser(String username, String plainPassword) {
         String hashed = BCrypt.hashpw(plainPassword, BCrypt.gensalt());
         String sql = "INSERT INTO users(username, password) VALUES(?, ?)";
@@ -22,7 +22,7 @@ public class UserDAO {
         }
     }
 
-    
+    // 로그인
     public static int login(String username, String plainPassword) {
         String sql = "SELECT id, password FROM users WHERE username = ?";
         try (Connection conn = DB.getConnection();

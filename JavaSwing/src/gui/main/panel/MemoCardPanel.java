@@ -1,31 +1,13 @@
 package gui.main.panel;
 
-import java.awt.AlphaComposite;
-import java.awt.BorderLayout;
-import java.awt.Color;
-import java.awt.Cursor;
-import java.awt.Dimension;
-import java.awt.FlowLayout;
-import java.awt.Graphics;
-import java.awt.Graphics2D;
-import java.awt.Insets;
-import java.awt.Point;
-import java.util.function.BooleanSupplier;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-import java.util.stream.Stream;
+import java.awt.*;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 
-import javax.swing.AbstractButton;
-import javax.swing.BorderFactory;
-import javax.swing.JButton;
-import javax.swing.JComponent;
-import javax.swing.JEditorPane;
-import javax.swing.JPanel;
-import javax.swing.JScrollPane;
-import javax.swing.JToggleButton;
-import javax.swing.SwingUtilities;
-import javax.swing.UIManager;
+import javax.swing.*;
 import javax.swing.border.EmptyBorder;
+import javax.swing.text.html.HTMLEditorKit;
+import javax.swing.text.html.StyleSheet;
 
 import org.pushingpixels.trident.Timeline;
 import org.pushingpixels.trident.Timeline.TimelineState;
@@ -39,413 +21,254 @@ import jiconfont.swing.IconFontSwing;
 
 public class MemoCardPanel extends JPanel {
 
-	private static final int WIDTH = 170, HEIGHT = 150;
-	private static final Pattern IMG_TAG = Pattern.compile("(?i)<img[^>]+src=[\"']?([^\"'>]+)[\"'][^>]*>");
-	private float alpha = 1f;
-	private boolean hover = false;
-	private final Memo memo;
-	private final JScrollPane contentScroll;
-	private final JPanel buttonPanel;
-	private final JButton editBtn, delBtn;
-	private final JToggleButton pinBtn;
-	private final Runnable onExpand;
+    private static final int WIDTH = 170;
+    private static final int HEIGHT = 150;
+    private float alpha = 1.0f;
 
-	public MemoCardPanel(Memo memo, Runnable onDelete, Runnable onEdit, Runnable onPin, Runnable onExpand) {
-		this.memo = memo;
-		this.onExpand = onExpand;
+    private final Memo memo;
+    private Runnable onCardClick;
 
-		setLayout(new BorderLayout());
-		setOpaque(false);
-		setPreferredSize(new Dimension(WIDTH, HEIGHT));
-		setMaximumSize(new Dimension(WIDTH, HEIGHT));
-		setBorder(new EmptyBorder(8, 10, 8, 10));
-		setBackground(UIManager.getColor("Panel.background"));
+    private final JEditorPane contentPane;
+    private final JPanel buttonPanel;
+    private final JScrollPane contentScroll;
+    private Color hoverBg = null;
 
-		JEditorPane html = new JEditorPane("text/html", renderSnippet(memo.getContent()));
-		html.setEditable(false);
-		html.setOpaque(false);
-		html.putClientProperty(JEditorPane.HONOR_DISPLAY_PROPERTIES, true);
+    private final JToggleButton pinBtn;
+    private final JButton editBtn;
+    private final JButton delBtn;
 
-		contentScroll = new JScrollPane(html, JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED,
-				JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
-		contentScroll.setBorder(BorderFactory.createEmptyBorder());
-		contentScroll.setOpaque(false);
-		contentScroll.getViewport().setOpaque(false);
-		contentScroll.setPreferredSize(new Dimension(WIDTH - 24, HEIGHT - 50));
+    public MemoCardPanel(Memo memo, Runnable onDelete, Runnable onEdit, Runnable onPin) {
+        this.memo = memo;
+        IconFontSwing.register(FontAwesome.getIconFont());
 
-		buttonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 0, 0));
-		buttonPanel.setOpaque(false);
+        setOpaque(false);
+        setBackground(UIManager.getColor("Panel.background"));
+        setLayout(new BorderLayout());
+        setPreferredSize(new Dimension(WIDTH, HEIGHT));
+        setBorder(new EmptyBorder(8, 10, 8, 10));
 
-		pinBtn = createToggle(memo::isFixFlag, onPin);
-		editBtn = createButton(onEdit);
-		delBtn = createButton(onDelete);
+        // 에디터
+        contentPane = new JEditorPane();
+        contentPane.setEditable(false);
+        contentPane.setOpaque(false);
+        contentPane.setContentType("text/html");
+        contentPane.putClientProperty(JEditorPane.HONOR_DISPLAY_PROPERTIES, Boolean.TRUE);
+        contentPane.setForeground(UIManager.getColor("Label.foreground"));
+        contentPane.setFocusable(false);
 
-		Stream.of(pinBtn, editBtn, delBtn).forEach(this::setupIcon);
+        HTMLEditorKit kit = new HTMLEditorKit();
+        contentPane.setEditorKit(kit);
+        StyleSheet styleSheet = kit.getStyleSheet();
+        styleSheet.addRule("body { font-family: 'Malgun Gothic'; font-size: 12px; margin: 0; padding: 0; }");
+        styleSheet.addRule("p { margin: 0; padding: 0; }");
 
-		buttonPanel.add(pinBtn);
-		buttonPanel.add(editBtn);
-		buttonPanel.add(delBtn);
+        String content = memo.getContent();
+        if (content == null || content.isBlank()) {
+            content = "<html><body></body></html>";
+        } else if (!content.toLowerCase().contains("<html")) {
+            content = "<html><body>" + content.replace("\n", "<br>") + "</body></html>";
+        }
+        contentPane.setText(content);
 
-		add(buttonPanel, BorderLayout.NORTH);
-		add(contentScroll, BorderLayout.CENTER);
+        contentScroll = new JScrollPane(contentPane);
+        contentScroll.setBorder(BorderFactory.createEmptyBorder());
+        contentScroll.setOpaque(false);
+        contentScroll.getViewport().setOpaque(false);
+        contentScroll.setPreferredSize(new Dimension(WIDTH - 24, HEIGHT - 50));
 
-		java.awt.event.MouseAdapter ml = new java.awt.event.MouseAdapter() {
-			public void mouseEntered(java.awt.event.MouseEvent e) {
-				if (!hover) {
-					hover = true;
-					setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-					repaint();
-				}
-			}
+        // 버튼
+        buttonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 0, 0));
+        buttonPanel.setOpaque(false);
 
-			public void mouseExited(java.awt.event.MouseEvent e) {
-				Point p = java.awt.MouseInfo.getPointerInfo().getLocation();
-				SwingUtilities.convertPointFromScreen(p, MemoCardPanel.this);
-				if (!MemoCardPanel.this.contains(p)) {
-					hover = false;
-					setCursor(Cursor.getDefaultCursor());
-					repaint();
-				}
-			}
+        pinBtn = new JToggleButton();
+        styleIconButton(pinBtn);
+        pinBtn.setSelected(memo.isFixFlag());
+        pinBtn.setToolTipText("고정");
+        pinBtn.addActionListener(e -> {
+            onPin.run();
+            updateIcons();
+        });
 
-			public void mouseClicked(java.awt.event.MouseEvent e) {
-				java.awt.Component c = SwingUtilities.getDeepestComponentAt(MemoCardPanel.this, e.getX(), e.getY());
-				if (!SwingUtilities.isDescendingFrom(c, buttonPanel))
-					onExpand.run();
-			}
-		};
-		addRecursiveListener(this, ml);
-	}
+        editBtn = new JButton();
+        styleIconButton(editBtn);
+        editBtn.setToolTipText("수정");
+        editBtn.addActionListener(e -> onEdit.run());
 
-	private void addRecursiveListener(java.awt.Component comp, java.awt.event.MouseListener ml) {
-		comp.addMouseListener(ml);
-		if (comp instanceof java.awt.Container cont) {
-			for (java.awt.Component child : cont.getComponents())
-				addRecursiveListener(child, ml);
-		}
-	}
+        delBtn = new JButton();
+        styleIconButton(delBtn);
+        delBtn.setToolTipText("삭제");
+        delBtn.addActionListener(e -> onDelete.run());
 
-	private JButton createButton(Runnable action) {
-		JButton b = new JButton();
-		b.setMargin(new Insets(0, 4, 0, 4));
-		b.setBorderPainted(false);
-		b.setContentAreaFilled(false);
-		b.setFocusable(false);
-		b.setRolloverEnabled(false);
-		b.addActionListener(e -> action.run());
-		return b;
-	}
+        buttonPanel.add(pinBtn);
+        buttonPanel.add(editBtn);
+        buttonPanel.add(delBtn);
 
-	private JToggleButton createToggle(BooleanSupplier state, Runnable action) {
-		JToggleButton t = new JToggleButton();
-		t.setSelected(state.getAsBoolean());
-		t.setMargin(new Insets(0, 4, 0, 4));
-		t.setBorderPainted(false);
-		t.setContentAreaFilled(false);
-		t.setFocusable(false);
-		t.setRolloverEnabled(false);
-		t.addActionListener(e -> action.run());
-		return t;
-	}
+        add(buttonPanel, BorderLayout.NORTH);
+        add(contentScroll, BorderLayout.CENTER);
+        updateIcons();
 
-	private void setupIcon(AbstractButton btn) {
-		boolean dark = FlatLaf.isLafDark();
-		Color accent = dark ? new Color(0x8AB4F8) : new Color(0x0A84FF);
-		FontAwesome fa = btn == pinBtn ? FontAwesome.THUMB_TACK
-				: btn == editBtn ? FontAwesome.PENCIL : FontAwesome.TIMES;
-		btn.setIcon(IconFontSwing.buildIcon(fa, 16, accent));
-		if (btn instanceof JToggleButton t)
-			t.setSelectedIcon(btn.getIcon());
-	}
+        setupUnifiedHoverAndClick();
+    }
 
-	private String renderSnippet(String html) {
-		if (html == null)
-			html = "";
-		Matcher m = IMG_TAG.matcher(html);
-		if (m.find()) {
-			String src = m.group(1);
-			return "<html><body style='margin:0'><img src='" + src
-					+ "' width='50' height='50' style='object-fit:cover;'/></body></html>";
-		}
-		String t = html.replaceAll("<[^>]+>", "").trim();
-		if (t.length() > 100)
-			t = t.substring(0, 100) + "…";
-		return "<html><body style='font-family:Malgun Gothic;font-size:12px;'>" + t + "</body></html>";
-	}
+    private void styleIconButton(AbstractButton btn) {
+        btn.setMargin(new Insets(0, 0, 0, 0));
+        btn.setBorderPainted(false);
+        btn.setContentAreaFilled(false);
+        btn.setFocusPainted(false);
+        btn.setOpaque(false);
+        btn.setPreferredSize(new Dimension(24, 24));
+    }
 
-	public void paintComponent(Graphics g) {
-		Graphics2D g2 = (Graphics2D) g.create();
-		int arc = 12;
-		g2.setComposite(AlphaComposite.SrcOver.derive(alpha));
-		g2.setColor(FlatLaf.isLafDark() ? new Color(0, 0, 0, 50) : new Color(0, 0, 0, 30));
-		g2.fillRoundRect(2, 4, getWidth() - 4, getHeight() - 4, arc, arc);
-		g2.setColor(getBackground());
-		g2.fillRoundRect(0, 0, getWidth() - 6, getHeight() - 6, arc, arc);
-		if (memo.isFixFlag()) {
-			g2.setColor(new Color(255, 216, 80, 160));
-			g2.fillRoundRect(0, 0, 8, getHeight() - 6, arc / 2, arc / 2);
-		}
-		if (hover) {
-			g2.setColor(new Color(255, 255, 255, 60));
-			g2.fillRoundRect(0, 0, getWidth() - 6, getHeight() - 6, arc, arc);
-		}
-		Color border = UIManager.getColor("Component.borderColor");
-		if (border == null)
-			border = FlatLaf.isLafDark() ? new Color(70, 70, 70) : new Color(200, 180, 80);
-		g2.setColor(border);
-		g2.drawRoundRect(0, 0, getWidth() - 7, getHeight() - 7, arc, arc);
-		g2.dispose();
-	}
+    private void updateIcons() {
+        Color iconColor = FlatLaf.isLafDark() ? Color.WHITE : UIManager.getColor("Label.foreground");
+        int size = 14;
+        pinBtn.setIcon(IconFontSwing.buildIcon(FontAwesome.THUMB_TACK, size, iconColor));
+        pinBtn.setSelectedIcon(IconFontSwing.buildIcon(FontAwesome.THUMB_TACK, size, iconColor));
+        editBtn.setIcon(IconFontSwing.buildIcon(FontAwesome.PENCIL, size, iconColor));
+        delBtn.setIcon(IconFontSwing.buildIcon(FontAwesome.TRASH, size, iconColor));
+    }
 
-	public void setAlpha(float a) {
-		alpha = a;
-		repaint();
-	}
+    public void updateThemeUI() {
+        SwingUtilities.updateComponentTreeUI(this);
+        updateIcons();
+        HTMLEditorKit kit = (HTMLEditorKit) contentPane.getEditorKit();
+        StyleSheet styleSheet = kit.getStyleSheet();
+        styleSheet.addRule("body { color: " + colorToHex(UIManager.getColor("Label.foreground")) + "; }");
+        contentPane.revalidate();
+        contentPane.repaint();
+    }
 
-	public float getAlpha() {
-		return alpha;
-	}
+    private String colorToHex(Color color) {
+        return String.format("#%02x%02x%02x", color.getRed(), color.getGreen(), color.getBlue());
+    }
 
-	public Memo getMemo() {
-		return memo;
-	}
+    private void setupUnifiedHoverAndClick() {
+        MouseAdapter adapter = new MouseAdapter() {
+            @Override
+            public void mouseEntered(MouseEvent e) {
+                hoverBg = getLighterColor();
+                setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+                repaint();
+            }
 
-	public void playEntryAnimation() {
-		setAlpha(0);
-		Timeline t = new Timeline(this);
-		t.addPropertyToInterpolate("alpha", 0f, 1f);
-		t.setDuration(350);
-		t.play();
-	}
+            @Override
+            public void mouseExited(MouseEvent e) {
+                PointerInfo pi = MouseInfo.getPointerInfo();
+                if (pi != null) {
+                    Point pt = pi.getLocation();
+                    SwingUtilities.convertPointFromScreen(pt, MemoCardPanel.this);
+                    if (!MemoCardPanel.this.contains(pt)) {
+                        hoverBg = null;
+                        setCursor(Cursor.getDefaultCursor());
+                        repaint();
+                    }
+                }
+            }
 
-	public void playDeleteAnimation(Runnable fin) {
-		Timeline t = new Timeline(this);
-		t.addPropertyToInterpolate("alpha", 1f, 0f);
-		t.setDuration(350);
-		t.addCallback(new TimelineCallback() {
-			public void onTimelineStateChanged(TimelineState o, TimelineState n, float f1, float f2) {
-				if (n == TimelineState.DONE && fin != null)
-					fin.run();
-			}
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                if (isClickOnButtons(e.getPoint())) return;
+                if (onCardClick != null) onCardClick.run();
+            }
+        };
 
-			public void onTimelinePulse(float f1, float f2) {
-			}
-		});
-		t.play();
-	}
+        // 일괄 등록
+        addMouseListener(adapter);
+        contentPane.addMouseListener(adapter);
+        contentScroll.addMouseListener(adapter);
+        contentScroll.getViewport().addMouseListener(adapter);
+        contentPane.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mousePressed(MouseEvent e) {
+                // JEditorPane 내부에서 발생한 마우스 클릭 위치
+                Point pt = SwingUtilities.convertPoint(contentPane, e.getPoint(), MemoCardPanel.this);
 
-	public void updateUI() {
-		super.updateUI();
-		if (pinBtn != null) {
-			Stream.of(pinBtn, editBtn, delBtn).forEach(this::setupIcon);
-			repaint();
-		}
-	}
+                // 버튼 영역 아닌 경우에만 위임
+                if (!isClickOnButtons(pt) && onCardClick != null) {
+                    onCardClick.run();
+                }
+            }
+        });
+        for (Component c : buttonPanel.getComponents()) c.addMouseListener(adapter);
+    }
 
-	public static class GhostPanel extends JComponent {
-		private final java.awt.image.BufferedImage img;
-		private float alpha = 1f;
+    private boolean isClickOnButtons(Point point) {
+        Point toBtnPanel = SwingUtilities.convertPoint(this, point, buttonPanel);
+        if (buttonPanel.contains(toBtnPanel)) return true;
+        for (Component c : buttonPanel.getComponents()) {
+            Point toChild = SwingUtilities.convertPoint(this, point, c);
+            if (c.contains(toChild)) return true;
+        }
+        return false;
+    }
 
-		public GhostPanel(java.awt.image.BufferedImage img) {
-			this.img = img;
-		}
+    public void setOnCardClick(Runnable onCardClick) {
+        this.onCardClick = onCardClick;
+    }
 
-		public void setAlpha(float a) {
-			alpha = a;
-			repaint();
-		}
+    public void setAlpha(float alpha) {
+        this.alpha = alpha;
+        repaint();
+    }
 
-		public float getAlpha() {
-			return alpha;
-		}
+    public float getAlpha() {
+        return alpha;
+    }
 
-		public void setAnimY(int y) {
-			setLocation(getX(), y);
-		}
+    public void playEntryAnimation() {
+        setAlpha(0f);
+        Timeline timeline = new Timeline(this);
+        timeline.addPropertyToInterpolate("alpha", 0.0f, 1.0f);
+        timeline.setDuration(350);
+        timeline.play();
+    }
 
-		public int getAnimY() {
-			return getY();
-		}
+    public void playDeleteAnimation(Runnable onFinished) {
+        Timeline timeline = new Timeline(this);
+        timeline.addPropertyToInterpolate("alpha", 1.0f, 0.0f);
+        timeline.setDuration(350);
+        timeline.addCallback(new TimelineCallback() {
+            @Override
+            public void onTimelineStateChanged(TimelineState oldState, TimelineState newState, float fraction, float pos) {
+                if (newState == TimelineState.DONE && onFinished != null) onFinished.run();
+            }
 
-		protected void paintComponent(Graphics g) {
-			Graphics2D g2 = (Graphics2D) g.create();
-			g2.setComposite(AlphaComposite.SrcOver.derive(alpha));
-			g2.drawImage(img, 0, 0, null);
-			g2.dispose();
-		}
-	}
+            @Override public void onTimelinePulse(float f, float g) {}
+        });
+        timeline.play();
+    }
 
-	public static class FullViewPanel extends JPanel {
-		private float alpha = 0f;
-		private final Memo memo;
-		private final JToggleButton pinBtn;
-		private final JButton editBtn;
-		private final JButton closeBtn;
-		private final JScrollPane scrollPane;
-		private final JEditorPane html;
+    @Override
+    protected void paintComponent(Graphics g) {
+        Graphics2D g2 = (Graphics2D) g.create();
+        int arc = 12;
+        g2.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, alpha));
+        g2.setColor(FlatLaf.isLafDark() ? new Color(0, 0, 0, 50) : new Color(0, 0, 0, 30));
+        g2.fillRoundRect(2, 4, getWidth() - 4, getHeight() - 4, arc, arc);
+        g2.setColor(hoverBg != null ? hoverBg : getBackground());
+        g2.fillRoundRect(0, 0, getWidth() - 6, getHeight() - 6, arc, arc);
+        if (memo.isFixFlag()) {
+            g2.setColor(new Color(255, 216, 80, 160));
+            g2.fillRoundRect(0, 0, 8, getHeight() - 6, arc / 2, arc / 2);
+        }
+        Color border = UIManager.getColor("Component.borderColor") != null ?
+            UIManager.getColor("Component.borderColor") :
+            (FlatLaf.isLafDark() ? new Color(70, 70, 70) : new Color(200, 180, 80));
+        g2.setColor(border);
+        g2.drawRoundRect(0, 0, getWidth() - 7, getHeight() - 7, arc, arc);
+        g2.dispose();
+    }
 
-		public FullViewPanel(Memo memo, Runnable onPin, Runnable onEdit, Runnable onClose) {
-			this.memo = memo;
-			setLayout(new BorderLayout());
-			setOpaque(true);
+    private Color getLighterColor() {
+        Color c = getBackground() != null ? getBackground() : UIManager.getColor("Panel.background");
+        return new Color(
+            Math.min(255, c.getRed() + 18),
+            Math.min(255, c.getGreen() + 18),
+            Math.min(255, c.getBlue() + 18)
+        );
+    }
 
-			JPanel bar = new JPanel(new FlowLayout(FlowLayout.RIGHT, 8, 0));
-			bar.setOpaque(false);
-
-			pinBtn = mkToggle(onPin);
-			editBtn = mkButton(onEdit);
-			closeBtn = mkButton(onClose);
-
-			bar.add(pinBtn);
-			bar.add(editBtn);
-			bar.add(closeBtn);
-			add(bar, BorderLayout.NORTH);
-
-			html = new JEditorPane("text/html", memo.getContent());
-			html.setEditable(false);
-			html.putClientProperty(JEditorPane.HONOR_DISPLAY_PROPERTIES, true);
-
-			scrollPane = new JScrollPane(html);
-			add(scrollPane, BorderLayout.CENTER);
-
-			applyTheme();
-		}
-
-		private JButton mkButton(Runnable act) {
-			JButton b = new JButton();
-			b.setBorderPainted(false);
-			b.setContentAreaFilled(false);
-			b.setFocusable(false);
-			b.setRolloverEnabled(false);
-			b.addActionListener(e -> act.run());
-			return b;
-		}
-
-		private JToggleButton mkToggle(Runnable act) {
-			JToggleButton t = new JToggleButton();
-			t.setSelected(memo.isFixFlag());
-			t.setBorderPainted(false);
-			t.setContentAreaFilled(false);
-			t.setFocusable(false);
-			t.setRolloverEnabled(false);
-			t.addActionListener(e -> act.run());
-			return t;
-		}
-
-		private void applyTheme() {
-			boolean dark = UIManager.getLookAndFeel().getName().toLowerCase().contains("dark");
-			Color bg = dark ? new Color(0x424140) : Color.WHITE;
-			Color border = dark ? new Color(0x444444) : new Color(0xCCCCCC);
-			html.setBackground(bg);
-			setBorder(new javax.swing.border.CompoundBorder(new javax.swing.border.LineBorder(border, 2, true),
-					new EmptyBorder(16, 16, 16, 16)));
-			scrollPane.getViewport().setBackground(bg);
-			Color accent = dark ? new Color(0x8AB4F8) : new Color(0x0A84FF);
-			pinBtn.setIcon(IconFontSwing.buildIcon(FontAwesome.THUMB_TACK, 18, accent));
-			pinBtn.setSelectedIcon(pinBtn.getIcon());
-			editBtn.setIcon(IconFontSwing.buildIcon(FontAwesome.PENCIL, 18, accent));
-			closeBtn.setIcon(IconFontSwing.buildIcon(FontAwesome.TIMES, 18, accent));
-		}
-
-		public void updateUI() {
-			super.updateUI();
-			if (scrollPane != null)
-				applyTheme();
-		}
-
-		public void refreshContent() {
-			html.setText(memo.getContent());
-		}
-
-		public float getAlpha() {
-			return alpha;
-		}
-
-		public void setAlpha(float a) {
-			alpha = a;
-			repaint();
-		}
-	}
-
-	public static class WrapLayout extends FlowLayout {
-		public WrapLayout(int align, int hg, int vg) {
-			super(align, hg, vg);
-		}
-
-		public Dimension preferredLayoutSize(java.awt.Container t) {
-			return layoutSize(t, true);
-		}
-
-		public Dimension minimumLayoutSize(java.awt.Container t) {
-			return layoutSize(t, false);
-		}
-
-		public void layoutContainer(java.awt.Container t) {
-			synchronized (t.getTreeLock()) {
-				int maxW = t.getWidth() > 0 ? t.getWidth() : Integer.MAX_VALUE;
-				maxW -= t.getInsets().left + t.getInsets().right + getHgap() * 2;
-				int x = 0, y = getVgap(), rowH = 0;
-				java.util.List<java.awt.Component> row = new java.util.ArrayList<>();
-				for (java.awt.Component c : t.getComponents()) {
-					if (!c.isVisible())
-						continue;
-					Dimension cd = c.getPreferredSize();
-					if (x == 0 || x + cd.width <= maxW) {
-						if (x > 0)
-							x += getHgap();
-						x += cd.width;
-						rowH = Math.max(rowH, cd.height);
-						row.add(c);
-					} else {
-						int offset = (maxW - x) / 2 + getHgap();
-						int rx = t.getInsets().left + offset;
-						for (java.awt.Component rc : row) {
-							Dimension rcd = rc.getPreferredSize();
-							rc.setBounds(rx, y, rcd.width, rcd.height);
-							rx += rcd.width + getHgap();
-						}
-						row.clear();
-						x = cd.width;
-						rowH = cd.height;
-						y += getVgap() + rowH;
-						row.add(c);
-					}
-				}
-				int offset = (maxW - x) / 2 + getHgap();
-				int rx = t.getInsets().left + offset;
-				for (java.awt.Component rc : row) {
-					Dimension rcd = rc.getPreferredSize();
-					rc.setBounds(rx, y, rcd.width, rcd.height);
-					rx += rcd.width + getHgap();
-				}
-			}
-		}
-
-		private Dimension layoutSize(java.awt.Container t, boolean pref) {
-			synchronized (t.getTreeLock()) {
-				int maxW = (t.getWidth() > 0 ? t.getWidth() : Integer.MAX_VALUE)
-						- (t.getInsets().left + t.getInsets().right + getHgap() * 2);
-				int x = 0, y = getVgap(), rowH = 0;
-				Dimension d = new Dimension(0, 0);
-				for (java.awt.Component c : t.getComponents()) {
-					if (!c.isVisible())
-						continue;
-					Dimension cd = pref ? c.getPreferredSize() : c.getMinimumSize();
-					if (x == 0 || x + cd.width <= maxW) {
-						if (x > 0)
-							x += getHgap();
-						x += cd.width;
-						rowH = Math.max(rowH, cd.height);
-					} else {
-						x = cd.width;
-						y += getVgap() + rowH;
-						rowH = cd.height;
-					}
-					d.width = Math.max(d.width, x);
-				}
-				d.height = y + rowH + getVgap();
-				return d;
-			}
-		}
-	}
+    public Memo getMemo() {
+        return memo;
+    }
 }
